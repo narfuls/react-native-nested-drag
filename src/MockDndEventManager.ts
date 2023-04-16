@@ -1,4 +1,4 @@
-import { IMockDndEventManager, IDroppable, IDraggable, IPosition, zeroPoint } from '.'
+import { IMockDndEventManager, IDroppable, IDraggable, IPosition, zeroPoint } from './types'
 
 export class MockDndEventManager implements IMockDndEventManager {
   droppables: IDroppable[] = []

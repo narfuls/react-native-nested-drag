@@ -1,8 +1,7 @@
 import { render, screen, act } from '@testing-library/react-native'
-import React from 'react'
 
 import { DropSum } from './DropSum'
-import { DragProvider, MockDndEventManager } from './react-native-nested-drag'
+import { DragProvider, IDndEventManager, MockDndEventManager } from 'react-native-nested-drag'
 
 const mockEventManager = new MockDndEventManager()
 describe('DropSum', () => {
@@ -17,11 +16,11 @@ describe('DropSum', () => {
     const draggable1 = mockEventManager.draggables.find((d) => d.payload == 1)
     const draggable2 = mockEventManager.draggables.find((d) => d.payload == 2)
     const droppable = mockEventManager.droppables[0]
-
+    jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
     jest.useFakeTimers()
     act(() => {
-      mockEventManager.drop(draggable1, droppable)
-      mockEventManager.drop(draggable2, droppable)
+      mockEventManager.drop(draggable1, droppable, undefined)
+      mockEventManager.drop(draggable2, droppable, undefined)
     })
     //@ts-ignore
     expect(sum).toHaveTextContent('sum: 3')

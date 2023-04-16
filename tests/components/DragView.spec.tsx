@@ -6,6 +6,7 @@ import { DragContext } from '../../src/DragContext'
 import { IDragContext, DragView, ISimplePubSub, DragHandleView, ITestDndEventManager, zeroPoint } from '../../src/'
 import { DndEventManager } from '../../src/EventManager'
 import { SimplePubSub } from '../../src/SimplePubSub'
+jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
 
 const TestingComponent = ({ id }: { id: number }) => {
   const { parentOnLayout } = useContext(DragContext)

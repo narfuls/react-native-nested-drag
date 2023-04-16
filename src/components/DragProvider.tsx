@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native'
 import React, { useRef, useState, PropsWithChildren, useMemo } from 'react'
 
-import { IDragContext, IDragClone, IPosition, IDragProviderProps, zeroPoint } from '../'
+import { IDragContext, IDragClone, IPosition, IDragProviderProps, zeroPoint } from '../types'
 import { DragContext } from '../DragContext'
 import { DndEventManager } from '../EventManager'
 import { DragClone } from './DragClone'

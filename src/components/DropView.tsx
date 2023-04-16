@@ -1,7 +1,7 @@
 import { View } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect } from 'react'
 
-import { IDroppable, IDropViewProps, IPosition, IDragContext } from '../'
+import { IDroppable, IDropViewProps, IPosition, IDragContext } from '../types'
 import { DragContext } from '../DragContext'
 import { SimplePubSub } from '../SimplePubSub'
 

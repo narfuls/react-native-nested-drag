@@ -1,10 +1,9 @@
-//import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar'
 import { StyleSheet, Text, View, TouchableOpacity, Vibration, ViewStyle } from 'react-native'
 import React, { PropsWithChildren, useState } from 'react'
 
 import { DropSum } from './DropSum'
-import { DragView, DropView, DragHandleView, DragProvider, IPosition, zeroPoint } from 'react-native-nested-drag'
+import { DragView, DropView, DragHandleView, DragProvider, IPosition } from 'react-native-nested-drag'
 
 export interface IDragItemProps {
   id: number
@@ -35,7 +34,7 @@ function Draggable({ children, id }: PropsWithChildren<IDragItemProps>) {
 
 function DraggableStay({ children, id }: PropsWithChildren<IDragItemProps>) {
   const [movable, setMovable] = useState(true)
-  const [movableOffset, setMovableOffset] = useState(zeroPoint)
+  const [movableOffset, setMovableOffset] = useState({ x: 0, y: 0 })
   return (
     <View style={{ ...styles.itemContainer, marginTop: 5 }}>
       <DragView style={styles.itemContainer} payload={id} movable={movable} movableOffset={movableOffset}>
@@ -209,7 +208,7 @@ export default function App() {
       <DragProvider>
         <DropView
           onDrop={(pos, payload) => {
-            console.log(`drop ${JSON.stringify(pos)}, id: ${payload}`)
+            console.log('drop' + JSON.stringify(pos) + ' id:' + payload)
           }}
         >
           <Text style={styles.dragHandle}>drop here************!</Text>
@@ -223,7 +222,7 @@ export default function App() {
           <DropView
             payload={0}
             onDrop={(pos, payload, next) => {
-              console.log(`dropin ${JSON.stringify(pos)}, id: ${payload}`)
+              console.log('dropin' + JSON.stringify(pos) + ' id:' + payload)
               next && next()
             }}
           >
@@ -231,7 +230,7 @@ export default function App() {
             <DropView
               payload={1}
               onDrop={(pos, payload) => {
-                console.log(`dropin 1 ${JSON.stringify(pos)}, id: ${payload}`)
+                console.log('dropin 1' + JSON.stringify(pos) + ' id:' + payload)
               }}
             >
               <Text style={styles.dragHandle}>drop here************!</Text>
@@ -239,7 +238,7 @@ export default function App() {
             <DropView
               payload={2}
               onDrop={(pos, payload) => {
-                console.log(`dropin 2 ${JSON.stringify(pos)}, id: ${payload}`)
+                console.log('dropin 2' + JSON.stringify(pos) + ' id:' + payload)
               }}
             >
               <Text style={styles.dragHandle}>drop here************!</Text>

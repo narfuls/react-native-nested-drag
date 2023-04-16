@@ -1,4 +1,4 @@
-import { ISimplePubSub } from '.'
+import { ISimplePubSub } from './types'
 
 export class SimplePubSub implements ISimplePubSub {
   handlers: (() => void)[] = []

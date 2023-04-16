@@ -1,7 +1,7 @@
 import { Animated } from 'react-native'
 import React, { useContext } from 'react'
 
-import { IDragClone } from '../'
+import { IDragClone } from '../types'
 import { DragContext } from '../DragContext'
 
 export function DragClone({ clone }: { clone?: IDragClone }) {

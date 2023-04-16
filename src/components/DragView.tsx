@@ -2,7 +2,7 @@ import { Animated, View, ViewStyle, PanResponder, Vibration } from 'react-native
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo } from 'react'
 
 import { DragContext } from '../DragContext'
-import { IDragViewProps, IDraggable, IPosition, IDragContext, zeroPoint } from '../'
+import { IDragViewProps, IDraggable, IPosition, IDragContext, zeroPoint } from '../types'
 import { SimplePubSub } from '../SimplePubSub'
 
 /* offsets:

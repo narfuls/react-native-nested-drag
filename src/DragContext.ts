@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import { IDragContext, zeroPoint } from '.'
+import { IDragContext, zeroPoint } from './types'
 import { DndEventManager } from './EventManager'
 
 export const DragContext = createContext<IDragContext>({

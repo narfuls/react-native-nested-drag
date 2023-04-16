@@ -1,4 +1,4 @@
-import { IDroppable, IDraggable, IPosition, IDndEventManager, OverlapMode } from '.'
+import { IDroppable, IDraggable, IPosition, IDndEventManager, OverlapMode } from './types'
 
 export class DndEventManager implements IDndEventManager {
   constructor(overlapMode?: OverlapMode) {

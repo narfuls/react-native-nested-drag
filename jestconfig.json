@@ -1,5 +1,6 @@
 {
   "preset": "jest-expo",
   "setupFilesAfterEnv": [ "@testing-library/jest-native/extend-expect"],
+  "modulePathIgnorePatterns": ["<rootDir>/example/"],
   "testRegex": "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$"
 }
