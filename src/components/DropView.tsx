@@ -1,7 +1,7 @@
 import { View } from 'react-native'
-import React, { useRef, useState, useContext, PropsWithChildren, useEffect } from 'react'
+import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
 
-import { IDroppable, IDropViewProps, IPosition, IDragContext } from '../types'
+import { IDroppable, IDropViewProps, IPosition, IDragContext, ILayoutData } from '../types'
 import { DragContext } from '../DragContext'
 import { SimplePubSub } from '../SimplePubSub'
 
@@ -23,100 +23,84 @@ export function DropView({
   const [style, setStyle] = useState(styleProp)
   /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
   const onLayoutPubSub = useRef(new SimplePubSub()).current
-  const droppableRef = useRef<IDroppable>()
+  const layoutRef = useRef<ILayoutData>({ x: -1, y: -1, width: 0, height: 0 })
   /** viewRef to measure */
   const view = useRef<View>(null)
 
-  useEffect(() => {
-    setStyle(styleProp)
-  }, [styleProp])
+  const onEnter = useCallback(
+    (position: IPosition, payload?: any) => {
+      overStyle && setStyle(overStyle)
+      onEnterProp && onEnterProp(position, payload)
+    },
+    [overStyle, onEnterProp],
+  )
 
-  useEffect(() => {
-    updateDroppable()
-  }, [children, onOver, onDropProp, onEnterProp, onExitProp, styleProp, overStyle, payload])
+  const onExit = useCallback(
+    (position: IPosition, payload?: any) => {
+      overStyle && setStyle(styleProp)
+      onExitProp && onExitProp(position, payload)
+    },
+    [styleProp, overStyle, onExitProp],
+  )
 
-  useEffect(() => {
-    ctx.parentOnLayout && ctx.parentOnLayout.subscribe(onLayout)
-    return () => {
-      ctx.parentOnLayout && ctx.parentOnLayout.unsubscribe(onLayout)
-    }
-  }, [ctx.parentOnLayout])
+  const onDrop = useCallback(
+    (position: IPosition, payload?: any, triggerNextDroppable?: () => void) => {
+      overStyle && setStyle(styleProp)
+      onDropProp && onDropProp(position, payload, triggerNextDroppable)
+    },
+    [styleProp, overStyle, onDropProp],
+  )
 
-  useEffect(() => {
-    droppableRef.current = {
+  const calcDroppable = useCallback<() => IDroppable>(() => {
+    return {
       id: dndId.current,
-      layout: droppableRef.current ? droppableRef.current.layout : { x: -1, y: -1, width: 0, height: 0 },
+      layout: layoutRef.current,
       onDrop: onDrop,
       onEnter: onEnter,
       onExit: onExit,
       onOver: onOver,
       payload: payload,
     }
+  }, [onOver, onDrop, onEnter, onExit, payload])
+
+  const onLayout = useCallback(() => {
+    if (view?.current) {
+      view.current.measure((_x, _y, width, height, pageX, pageY) => {
+        layoutRef.current = { x: pageX, y: pageY, width: width, height: height }
+        ctx.dndEventManager.updateDroppable(calcDroppable())
+      })
+    }
+    onLayoutPubSub.publish()
+  }, [onLayoutPubSub, calcDroppable, ctx.dndEventManager])
+
+  useEffect(() => {
+    setStyle(styleProp)
+  }, [styleProp])
+
+  useEffect(() => {
     if (dndId.current != undefined) {
       if (disabled) {
         ctx.dndEventManager.unregisterDroppable(dndId.current)
         dndId.current = undefined
       } else {
-        ctx.dndEventManager.updateDroppable(droppableRef.current)
+        ctx.dndEventManager.updateDroppable(calcDroppable())
       }
     } else {
       if (!disabled) {
-        dndId.current = ctx.dndEventManager.registerDroppable(droppableRef.current)
+        dndId.current = ctx.dndEventManager.registerDroppable(calcDroppable())
       }
     }
     return () => {
       dndId.current !== undefined && ctx.dndEventManager.unregisterDroppable(dndId.current)
     }
-  }, [disabled])
+  }, [disabled, calcDroppable, ctx.dndEventManager])
 
-  const updateDroppable = () => {
-    //  dnd handlers should contain uptodate context
-    if (droppableRef.current != undefined) {
-      ctx.dndEventManager.updateDroppable({
-        ...droppableRef.current,
-        onDrop: onDrop,
-        onEnter: onEnter,
-        onExit: onExit,
-        onOver: onOver,
-        payload: payload,
-      })
+  useEffect(() => {
+    ctx.parentOnLayout && ctx.parentOnLayout.subscribe(onLayout)
+    return () => {
+      ctx.parentOnLayout && ctx.parentOnLayout.unsubscribe(onLayout)
     }
-  }
-
-  const onEnter = (position: IPosition, payload?: any) => {
-    overStyle && setStyle(overStyle)
-    onEnterProp && onEnterProp(position, payload)
-  }
-
-  const onExit = (position: IPosition, payload?: any) => {
-    overStyle && setStyle(styleProp)
-    onExitProp && onExitProp(position, payload)
-  }
-
-  const onDrop = (position: IPosition, payload?: any, triggerNextDroppable?: () => void) => {
-    overStyle && setStyle(styleProp)
-    onDropProp && onDropProp(position, payload, triggerNextDroppable)
-  }
-
-  const onLayout = () => {
-    if (view?.current) {
-      view.current.measure((_x, _y, width, height, pageX, pageY) => {
-        droppableRef.current = {
-          id: dndId.current,
-          layout: { x: pageX, y: pageY, width: width, height: height },
-          onDrop: onDrop,
-          onEnter: onEnter,
-          onExit: onExit,
-          onOver: onOver,
-          payload: payload,
-        }
-        if (dndId.current != undefined) {
-          ctx.dndEventManager.updateDroppable(droppableRef.current)
-        }
-      })
-    }
-    onLayoutPubSub.publish()
-  }
+  }, [ctx.parentOnLayout, onLayout])
 
   /** context for nested elements */
   const context: IDragContext = { ...ctx, parentOnLayout: onLayoutPubSub }
