@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, TouchableOpacity, Vibration, ViewStyle } from 'react-native'
-import React, { PropsWithChildren, useRef, useState } from 'react'
+import { StyleSheet, Text, TouchableOpacity } from 'react-native'
+import React, { useRef, useState } from 'react'
 
-import { DragView, DropView, DragHandleView, DragProvider, IPosition } from 'react-native-nested-drag'
+import { DragView, DropView } from 'react-native-nested-drag'
 
 export interface IDragItemProps {
   id: number
