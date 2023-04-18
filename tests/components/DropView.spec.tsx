@@ -2,13 +2,13 @@ import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import { Text, View, ViewStyle } from 'react-native'
 import React, { useContext, useState } from 'react'
 
-import { DragContext } from '../../src/DragContext'
-import { IDragContext, DropView, ISimplePubSub, ITestDndEventManager, zeroPoint } from '../../src'
+import { DragViewLayoutContext, DragContext } from '../../src/DragContext'
+import { IDragViewLayoutContext, IDragContext, DropView, ISimplePubSub, ITestDndEventManager, zeroPoint } from '../../src'
 import { DndEventManager } from '../../src/EventManager'
 import { SimplePubSub } from '../../src/SimplePubSub'
 
 const TestingComponent = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragContext)
+  const { parentOnLayout } = useContext(DragViewLayoutContext)
   return (
     <Text testID={'TestingComponent' + id}>
       {parentOnLayout ? 'exists' : 'null'} id:{(parentOnLayout as IMockSimplePubSub)?.id}
@@ -17,7 +17,7 @@ const TestingComponent = ({ id }: { id: number }) => {
 }
 
 const TestingComponentReciever = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragContext)
+  const { parentOnLayout } = useContext(DragViewLayoutContext)
   const [count, setCout] = useState(0)
   parentOnLayout &&
     parentOnLayout.subscribe(() => {
@@ -49,28 +49,12 @@ describe('DropView', () => {
   let context: IDragContext
   let Unmount: () => void
 
-  beforeEach(() => {
-    context = {
-      dndEventManager: new DndEventManager(),
-      panHandlers: {},
-      setClone: jest.fn(),
-      providerOffset: zeroPoint,
-      setHandleExists: jest.fn(),
-      parentOnLayout: undefined,
-      parentOffset: zeroPoint,
-    }
-
-    const { unmount } = render(
-      <DragContext.Provider value={context}>
-        <DropView style={uniqueStyle} overStyle={overStyle}>
-          <Text>{uniqueText}</Text>
-        </DropView>
-      </DragContext.Provider>,
-    )
-    Unmount = unmount
-  })
-
   it('renders children and style', () => {
+    render(
+      <DropView style={uniqueStyle} overStyle={overStyle}>
+        <Text>{uniqueText}</Text>
+      </DropView>,
+    )
     const child = screen.queryAllByText(uniqueText)
     expect(child.length).toBe(1)
 
@@ -83,26 +67,21 @@ describe('DropView', () => {
 
   describe('subscription', () => {
     let parentOnLayout: IMockSimplePubSub
+    let contextLayout: IDragViewLayoutContext
     beforeEach(() => {
       parentOnLayout = { subscribe: jest.fn(), unsubscribe: jest.fn(), publish: jest.fn(), id: 0 }
 
-      context = {
-        dndEventManager: new DndEventManager(),
-        panHandlers: {},
-        setClone: jest.fn(),
-        providerOffset: zeroPoint,
-        setHandleExists: jest.fn(),
-        parentOnLayout: parentOnLayout,
-        parentOffset: zeroPoint,
-      }
+      context = { dndEventManager: new DndEventManager(), setClone: jest.fn() }
+      contextLayout = { parentOnLayout: parentOnLayout }
     })
+
     it('subscribes and unsubscribes ctx.parentOnLayout', () => {
       const { unmount } = render(
-        <DragContext.Provider value={context}>
+        <DragViewLayoutContext.Provider value={contextLayout}>
           <DropView>
             <Text>{uniqueText}</Text>
           </DropView>
-        </DragContext.Provider>,
+        </DragViewLayoutContext.Provider>,
       )
       Unmount = unmount
 
@@ -118,13 +97,13 @@ describe('DropView', () => {
       render(
         <View>
           <TestingComponent id={0} />
-          <DragContext.Provider value={context}>
+          <DragViewLayoutContext.Provider value={contextLayout}>
             <TestingComponent id={1} />
             <DropView>
               <TestingComponent id={2} />
               <Text>{uniqueText}</Text>
             </DropView>
-          </DragContext.Provider>
+          </DragViewLayoutContext.Provider>
         </View>,
       )
       const testComp0 = screen.queryByTestId('TestingComponent0')
@@ -155,19 +134,18 @@ describe('DropView', () => {
       }
       context = {
         dndEventManager: mockMngr,
-        panHandlers: {},
         setClone: jest.fn(),
-        providerOffset: zeroPoint,
-        setHandleExists: jest.fn(),
-        parentOnLayout: pubsub,
-        parentOffset: zeroPoint,
       }
-
+      contextLayout = {
+        parentOnLayout: pubsub,
+      }
       const { unmount } = render(
         <DragContext.Provider value={context}>
-          <DropView>
-            <Text>{uniqueText}</Text>
-          </DropView>
+          <DragViewLayoutContext.Provider value={contextLayout}>
+            <DropView>
+              <Text>{uniqueText}</Text>
+            </DropView>
+          </DragViewLayoutContext.Provider>
         </DragContext.Provider>,
       )
 
@@ -199,23 +177,13 @@ describe('DropView', () => {
     })
 
     it('calls publish onLayout for children', () => {
-      context = {
-        dndEventManager: new DndEventManager(),
-        panHandlers: {},
-        setClone: jest.fn(),
-        providerOffset: zeroPoint,
-        setHandleExists: jest.fn(),
-        parentOnLayout: undefined,
-        parentOffset: zeroPoint,
-      }
-
       render(
-        <DragContext.Provider value={context}>
+        <DragViewLayoutContext.Provider value={contextLayout}>
           <DropView>
             <Text>{uniqueText}</Text>
             <TestingComponentReciever id={0} />
           </DropView>
-        </DragContext.Provider>,
+        </DragViewLayoutContext.Provider>,
       )
       const testComp0 = screen.queryByTestId('TestingComponentReciever0')
       //@ts-ignore
@@ -243,12 +211,7 @@ describe('DropView', () => {
       onOver = jest.fn()
       context = {
         dndEventManager: new DndEventManager(),
-        panHandlers: {},
         setClone: jest.fn(),
-        providerOffset: zeroPoint,
-        setHandleExists: jest.fn(),
-        parentOnLayout: undefined,
-        parentOffset: zeroPoint,
       }
 
       render(

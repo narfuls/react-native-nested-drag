@@ -18,34 +18,27 @@ export function DragProvider({ children, mockEventManager, overlapMode }: PropsW
       lastCloneIdRef.current = c.draggableDndId
       setClone(c)
     } else if (lastCloneIdRef.current == dndId) {
-      //don't disable if new drag started
       setClone(undefined)
-    }
+    } //don't disable if new drag started
   }
 
   const context: IDragContext = useMemo(() => {
     return {
       dndEventManager: eventManager,
-      panHandlers: {},
       setClone: setCloneState,
-      providerOffset: windowOffset,
-      parentOffset: { x: 0, y: 0 },
-      setHandleExists: () => undefined,
     }
-  }, [windowOffset, eventManager])
+  }, [eventManager])
 
   // measure provider offset
   const offsetMeasureView = useRef<View>(null)
 
   const onLayout = () => {
-    if (offsetMeasureView.current) {
+    offsetMeasureView.current &&
       offsetMeasureView.current.measure((_x, _y, _width, _height, pageX, pageY) => {
         if (pageX != -windowOffset.x || pageY != -windowOffset.y) {
-          // setWindowOffset cases all dnd elements rerender, so call it only on change.
           setWindowOffset({ x: -pageX, y: -pageY })
         }
       })
-    }
   }
 
   return (
@@ -53,7 +46,7 @@ export function DragProvider({ children, mockEventManager, overlapMode }: PropsW
       <View style={styles.container}>
         <View ref={offsetMeasureView} onLayout={onLayout} />
         {children}
-        <DragClone clone={clone} />
+        <DragClone clone={clone} providerOffset={windowOffset} />
       </View>
     </DragContext.Provider>
   )

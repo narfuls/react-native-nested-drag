@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react-native'
 import { Text, ViewStyle } from 'react-native'
 import React from 'react'
 
-import { DragContext } from '../../src/DragContext'
-import { DragHandleView, IDragContext, zeroPoint } from '../../src/'
+import { DragHandleContext } from '../../src/DragContext'
+import { DragHandleView, IDragHandleContext } from '../../src/'
 
 jest.setTimeout(10000)
 describe('DragHandleView', () => {
@@ -20,21 +20,16 @@ describe('DragHandleView', () => {
 
   beforeEach(() => {
     setHandleExists = jest.fn()
-    const context: IDragContext = {
+    const context: IDragHandleContext = {
       setHandleExists: setHandleExists,
       panHandlers: panHandlers as any,
-      dndEventManager: undefined as any,
-      parentOnLayout: undefined,
-      setClone: jest.fn(),
-      providerOffset: zeroPoint,
-      parentOffset: zeroPoint,
     }
     render(
-      <DragContext.Provider value={context}>
+      <DragHandleContext.Provider value={context}>
         <DragHandleView style={uniqueStyle}>
           <Text>{uniqueText}</Text>
         </DragHandleView>
-      </DragContext.Provider>,
+      </DragHandleContext.Provider>,
     )
   })
 

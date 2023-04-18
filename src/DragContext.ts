@@ -1,13 +1,22 @@
 import { createContext } from 'react'
-import { IDragContext, zeroPoint } from './types'
+import { IDragContext, IDragHandleContext, IDragViewLayoutContext, IDragViewOffsetContext, zeroPoint } from './types'
 import { DndEventManager } from './EventManager'
 
+//reason to split context: dndEventManager is singleton but parents need to recreate contect and dependencies from dndEventManager trigger.
 export const DragContext = createContext<IDragContext>({
+  dndEventManager: new DndEventManager(),
+  setClone: () => undefined,
+})
+
+export const DragHandleContext = createContext<IDragHandleContext>({
   setHandleExists: () => undefined,
   panHandlers: {},
-  dndEventManager: new DndEventManager(),
+})
+
+export const DragViewLayoutContext = createContext<IDragViewLayoutContext>({
   parentOnLayout: undefined,
-  setClone: () => undefined,
-  providerOffset: zeroPoint,
+})
+
+export const DragViewOffsetContext = createContext<IDragViewOffsetContext>({
   parentOffset: zeroPoint,
 })

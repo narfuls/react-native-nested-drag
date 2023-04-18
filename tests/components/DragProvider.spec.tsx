@@ -1,18 +1,9 @@
-import { render, screen, fireEvent, act } from '@testing-library/react-native'
+import { render, screen } from '@testing-library/react-native'
 import { Text, Animated } from 'react-native'
 import React, { useContext, useEffect } from 'react'
 
 import { DragContext } from '../../src/DragContext'
 import { DragProvider, IDragClone, MockDndEventManager, IMockDndEventManager, zeroPoint } from '../../src/'
-
-const TestingComponent = () => {
-  const { providerOffset: providerOffset } = useContext(DragContext)
-  return (
-    <Text testID='TestingComponent'>
-      {providerOffset.x}:{providerOffset.y}
-    </Text>
-  )
-}
 
 describe('DragProvider', () => {
   const uniqueText = 'DragHandleView*-975!@#$%^&*'
@@ -20,7 +11,6 @@ describe('DragProvider', () => {
     render(
       <DragProvider>
         <Text>{uniqueText}</Text>
-        <TestingComponent />
       </DragProvider>,
     )
   })
@@ -47,31 +37,6 @@ describe('DragProvider', () => {
     expect(t).toBeTruthy()
     //@ts-ignore
     expect(t).toHaveTextContent('mock')
-  })
-
-  it('sets offset', () => {
-    const view = screen.queryByText(uniqueText)?.parent?.children[0]
-    expect(view).toBeTruthy()
-    if (!view) throw new Error('view is null')
-
-    expect(typeof view).not.toBe('string')
-
-    if (typeof view !== 'string') {
-      const measure = jest.fn().mockImplementation((f) => {
-        f(0, 0, 0, 0, 11, 11)
-      })
-      view.instance.measure = measure
-      act(() => {
-        fireEvent(view, 'layout')
-      })
-
-      expect(measure).toBeCalledTimes(1)
-
-      const offset = screen.queryByTestId('TestingComponent')
-      expect(offset).toBeTruthy()
-      //@ts-ignore
-      expect(offset).toHaveTextContent('-11:-11')
-    }
   })
 
   it('sets clone undefinded only if second param matchs', () => {

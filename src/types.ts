@@ -3,17 +3,24 @@ import { Animated, GestureResponderHandlers, ViewStyle } from 'react-native'
 export interface IDragContext {
   /** Calls dnd events */
   dndEventManager: IDndEventManager
-  /** Set in view to pass to nested handle */
-  panHandlers: GestureResponderHandlers
-  /** Call in HandleView to show presence to parent view */
-  setHandleExists?: (val: boolean) => void
-  /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
-  parentOnLayout?: ISimplePubSub
   /** Set only in DragProvider. use anywhere
    * @param dndId is necesary for set clone undefinded */
   setClone: (clone?: IDragClone, dndId?: number) => void
-  /** Offset for calc absolute position */
-  providerOffset: IPosition
+}
+
+export interface IDragHandleContext {
+  /** Set in view to pass to nested handle */
+  panHandlers: GestureResponderHandlers
+  /** Call in HandleView to show presence to parent view */
+  setHandleExists: () => void
+}
+
+export interface IDragViewLayoutContext {
+  /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
+  parentOnLayout?: ISimplePubSub
+}
+
+export interface IDragViewOffsetContext {
   parentOffset: IPosition
 }
 
@@ -134,13 +141,21 @@ export interface IDragHandleViewProps {
   style?: ViewStyle
 }
 
+export interface IDragCloneProps {
+  clone?: IDragClone
+  /** Offset for calc absolute position */
+  providerOffset: IPosition
+}
+
 export interface IDragProviderProps {
   /** for testing */
   mockEventManager?: IDndEventManager
   /** droppable overlap call ('first' | 'last' | 'all' | compare function) (default last) */
   overlapMode?: OverlapMode
 }
+
 export type OverlapMode = 'first' | 'last' | 'all' | DroppablesComparer
+
 export type DroppablesComparer = (droppable1: { layout: ILayoutData; payload?: any }, droppable2: { layout: ILayoutData; payload?: any }) => number
 
 export interface IDragViewStyleProps {
@@ -173,6 +188,7 @@ export interface IDragViewProps extends IDragViewStyleProps, IDraggableEvents {
   /** in case you want to restore innser state (handy for nested movable) */
   movableOffset?: IPosition
 }
+
 /** Animated.TimingAnimationConfig without toValue and useNativeDriver*/
 export interface ITimingAnimationConfig {
   /** Length of animation (milliseconds). @Default 500. */

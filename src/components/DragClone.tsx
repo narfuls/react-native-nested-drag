@@ -1,11 +1,9 @@
 import { Animated } from 'react-native'
-import React, { useContext } from 'react'
+import React from 'react'
 
-import { IDragClone } from '../types'
-import { DragContext } from '../DragContext'
+import { IDragCloneProps } from '../types'
 
-export function DragClone({ clone }: { clone?: IDragClone }) {
-  const ctx = useContext(DragContext)
+export function DragClone({ clone, providerOffset }: IDragCloneProps) {
   if (clone) {
     return (
       <Animated.View
@@ -14,8 +12,8 @@ export function DragClone({ clone }: { clone?: IDragClone }) {
           {
             position: 'absolute',
             zIndex: 1,
-            left: clone.position!.x + ctx.providerOffset.x,
-            top: clone.position!.y + ctx.providerOffset.y,
+            left: clone.position!.x + providerOffset.x,
+            top: clone.position!.y + providerOffset.y,
             opacity: clone.opacity,
           },
         ]}

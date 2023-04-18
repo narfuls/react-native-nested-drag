@@ -1,8 +1,8 @@
 import { Animated, View, ViewStyle, PanResponder, Vibration } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo } from 'react'
 
-import { DragContext } from '../DragContext'
-import { IDragViewProps, IDraggable, IPosition, IDragContext, zeroPoint } from '../types'
+import { DragContext, DragHandleContext, DragViewLayoutContext, DragViewOffsetContext } from '../DragContext'
+import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, IDragViewLayoutContext, IDragViewOffsetContext, zeroPoint } from '../types'
 import { SimplePubSub } from '../SimplePubSub'
 
 /* offsets:
@@ -38,7 +38,9 @@ export function DragView({
   animationEndOptions = animEndOptions,
   animationDropOptions = empty,
 }: PropsWithChildren<IDragViewProps>) {
-  const ctx = useContext(DragContext)
+  const { dndEventManager, setClone: ctxSetClone } = useContext(DragContext)
+  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const { parentOffset } = useContext(DragViewOffsetContext)
 
   const [style, setStyle] = useState(styleProp)
   const [handleExists, setHandleExists] = useState(false)
@@ -49,14 +51,14 @@ export function DragView({
   const defaultStyleRef = useRef(styleProp)
   /** unlike pan updates only on movable dragend */
   const movedOffset = useRef<IPosition>(movableOffset)
-  const parentOffsetRef = useRef<IPosition>(ctx.parentOffset)
+  const parentOffsetRef = useRef<IPosition>(parentOffset)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
   /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
   const onLayoutPubSub = useRef(new SimplePubSub()).current
   /** viewRef to measure */
   const view = useRef<View>(null)
-  /** initial absolutePos ? ? ? (if you wondered why append and then distract parentOffsetRef.
+  /** initial absolutePos * * (if you wondered why append and then distract parentOffsetRef ?
    * Coz absolutePos updates only inside 'measure' and parentOffsetRef may change while measure not triggered.
    * So it contains parent movedOffset) */
   const absolutePos = useRef<IPosition>(zeroPoint)
@@ -68,25 +70,39 @@ export function DragView({
     () => (handleExists || disabled ? {} : panResponder.panHandlers),
     [handleExists, panResponder, disabled],
   )
-
+  const setHandle = () => {
+    setHandleExists(true)
+  }
   /** context for nested elements */
-  const context: IDragContext = useMemo(() => {
+  const handleContext: IDragHandleContext = useMemo(() => {
+    console.log('v4 handleContext: ' + payload)
+    return {
+      panHandlers: panHandlers,
+      setHandleExists: setHandle,
+    }
+  }, [panHandlers, setHandle])
+
+  const layoutContext: IDragViewLayoutContext = useMemo(() => {
+    console.log('v4 layoutContext: ' + payload)
+    return {
+      parentOnLayout: onLayoutPubSub,
+    }
+  }, [onLayoutPubSub])
+
+  const offsetContext: IDragViewOffsetContext = useMemo(() => {
+    console.log('v4 offsetContext: ' + payload)
     parentOffsetRef.current = {
-      x: ctx.parentOffset.x,
-      y: ctx.parentOffset.y,
+      x: parentOffset.x,
+      y: parentOffset.y,
     }
     setDndEventManagerDraggable && setDndEventManagerDraggable()
     return {
-      ...ctx,
       parentOffset: {
-        x: ctx.parentOffset.x - movedOffset.current.x,
-        y: ctx.parentOffset.y - movedOffset.current.y,
+        x: parentOffset.x - movedOffset.current.x,
+        y: parentOffset.y - movedOffset.current.y,
       },
-      panHandlers: panHandlers,
-      setHandleExists: setHandleExists,
-      parentOnLayout: onLayoutPubSub,
     }
-  }, [ctx, panHandlers, movedOffset.current, onLayoutPubSub])
+  }, [parentOffset, movedOffset.current])
 
   useEffect(() => {
     setDefaultStyle()
@@ -100,21 +116,22 @@ export function DragView({
 
   /* for subscribtions */
   useEffect(() => {
-    if (ctx.parentOnLayout) {
-      ctx.parentOnLayout.subscribe(onLayout)
+    if (parentOnLayout) {
+      parentOnLayout.subscribe(onLayout)
       return () => {
-        ctx.parentOnLayout && ctx.parentOnLayout.unsubscribe(onLayout)
-        dndId.current !== undefined && ctx.dndEventManager.unregisterDraggable(dndId.current)
+        parentOnLayout && parentOnLayout.unsubscribe(onLayout)
+        dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
       }
     } else {
       return () => {
-        dndId.current !== undefined && ctx.dndEventManager.unregisterDraggable(dndId.current)
+        dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
       }
     }
   }, [])
 
   /* create and refresh panHandlers */
   useEffect(() => {
+    console.log('new PanResponder: ' + payload)
     let onLongPressTimeout: NodeJS.Timeout
     let shouldDrag = false
     setPanResponder(
@@ -123,30 +140,26 @@ export function DragView({
         onMoveShouldSetPanResponder: () => false,
         onPanResponderGrant: (_evt, gestureState) => {
           onLongPressTimeout = setTimeout(() => {
-            dndId.current !== undefined && ctx.dndEventManager.handleDragStart(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
+            dndId.current !== undefined && dndEventManager.handleDragStart(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
             shouldDrag = true
             vibroDuration > 0 && Vibration.vibrate(vibroDuration)
           }, longPressDelay)
         },
         onPanResponderMove: (evt, gestureState) => {
           if (shouldDrag) {
-            dndId.current !== undefined && ctx.dndEventManager.handleDragMove(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
+            dndId.current !== undefined && dndEventManager.handleDragMove(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
             Animated.event([null, { dx: pan.x, dy: pan.y }], { useNativeDriver: false })(evt, gestureState)
           } else {
             Math.abs(gestureState.dx) + Math.abs(gestureState.dy) > 10 && clearTimeout(onLongPressTimeout)
           }
         },
         onPanResponderRelease: (_evt, gestureState) => {
-          shouldDrag &&
-            dndId.current !== undefined &&
-            ctx.dndEventManager.handleDragEnd(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
+          shouldDrag && dndId.current !== undefined && dndEventManager.handleDragEnd(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
           shouldDrag = false
           clearTimeout(onLongPressTimeout)
         },
         onPanResponderTerminate: (_evt, gestureState) => {
-          shouldDrag &&
-            dndId.current !== undefined &&
-            ctx.dndEventManager.handleDragEnd(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
+          shouldDrag && dndId.current !== undefined && dndEventManager.handleDragEnd(dndId.current, { x: gestureState.moveX, y: gestureState.moveY })
           shouldDrag = false
           clearTimeout(onLongPressTimeout)
         },
@@ -154,7 +167,7 @@ export function DragView({
         onPanResponderTerminationRequest: () => true,
       }),
     )
-  }, [longPressDelay, vibroDuration])
+  }, [longPressDelay, vibroDuration, pan, dndEventManager])
 
   const setDndEventManagerDraggable = () => {
     //  dnd handlers should contain uptodate context
@@ -170,9 +183,9 @@ export function DragView({
       payload: payload,
     }
     if (dndId.current != undefined) {
-      ctx.dndEventManager.updateDraggable(draggable)
+      dndEventManager.updateDraggable(draggable)
     } else {
-      dndId.current = ctx.dndEventManager.registerDraggable(draggable)
+      dndId.current = dndEventManager.registerDraggable(draggable)
     }
   }
 
@@ -198,10 +211,10 @@ export function DragView({
    * setClone(true) sets clone with default style*/
   const setClone = (exists = false, styleParam?: ViewStyle) => {
     if (!exists) {
-      ctx.setClone(undefined, dndId.current)
+      ctxSetClone(undefined, dndId.current)
     } else {
       dndId.current !== undefined &&
-        ctx.setClone({
+        ctxSetClone({
           draggableDndId: dndId.current,
           style: styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current,
           pan: pan,
@@ -308,10 +321,14 @@ export function DragView({
   }
 
   return (
-    <DragContext.Provider value={context}>
-      <View {...ownPanHandlers} onLayout={onLayout} ref={view} style={style}>
-        {children}
-      </View>
-    </DragContext.Provider>
+    <DragHandleContext.Provider value={handleContext}>
+      <DragViewLayoutContext.Provider value={layoutContext}>
+        <DragViewOffsetContext.Provider value={offsetContext}>
+          <View {...ownPanHandlers} onLayout={onLayout} ref={view} style={style}>
+            {children}
+          </View>
+        </DragViewOffsetContext.Provider>
+      </DragViewLayoutContext.Provider>
+    </DragHandleContext.Provider>
   )
 }

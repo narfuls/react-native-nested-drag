@@ -3,8 +3,6 @@ import { Text, ViewStyle, Animated } from 'react-native'
 import React from 'react'
 
 import { DragClone } from '../../src/components/DragClone'
-import { DragContext } from '../../src/DragContext'
-import { zeroPoint } from '../../src'
 
 jest.setTimeout(10000)
 describe('DragClone', () => {
@@ -18,15 +16,6 @@ describe('DragClone', () => {
   }
 
   beforeEach(() => {
-    const context = {
-      dndEventManager: undefined as any,
-      panHandlers: {},
-      setClone: jest.fn(),
-      providerOffset: { x: 10, y: 10 },
-      setHandleExists: jest.fn(),
-      parentOnLayout: undefined,
-      parentOffset: zeroPoint,
-    }
     const clone = {
       draggableDndId: 0,
       style: uniqueStyle,
@@ -35,11 +24,7 @@ describe('DragClone', () => {
       opacity: new Animated.Value(0.33),
       children: <Text>{uniqueText}</Text>,
     }
-    render(
-      <DragContext.Provider value={context}>
-        <DragClone clone={clone} />
-      </DragContext.Provider>,
-    )
+    render(<DragClone clone={clone} providerOffset={{ x: 10, y: 10 }} />)
   })
 
   it('renders children', () => {

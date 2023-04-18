@@ -1,8 +1,8 @@
 import { View } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
 
-import { IDroppable, IDropViewProps, IPosition, IDragContext, ILayoutData } from '../types'
-import { DragContext } from '../DragContext'
+import { IDroppable, IDropViewProps, IPosition, IDragViewLayoutContext, ILayoutData } from '../types'
+import { DragContext, DragViewLayoutContext } from '../DragContext'
 import { SimplePubSub } from '../SimplePubSub'
 
 const empty = {}
@@ -17,7 +17,8 @@ export function DropView({
   onExit: onExitProp,
   onOver,
 }: PropsWithChildren<IDropViewProps>) {
-  const ctx = useContext(DragContext)
+  const { dndEventManager } = useContext(DragContext)
+  const { parentOnLayout } = useContext(DragViewLayoutContext)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
   const [style, setStyle] = useState(styleProp)
@@ -67,11 +68,11 @@ export function DropView({
     if (view?.current) {
       view.current.measure((_x, _y, width, height, pageX, pageY) => {
         layoutRef.current = { x: pageX, y: pageY, width: width, height: height }
-        ctx.dndEventManager.updateDroppable(calcDroppable())
+        dndEventManager.updateDroppable(calcDroppable())
       })
     }
     onLayoutPubSub.publish()
-  }, [onLayoutPubSub, calcDroppable, ctx.dndEventManager])
+  }, [onLayoutPubSub, calcDroppable, dndEventManager])
 
   useEffect(() => {
     setStyle(styleProp)
@@ -80,36 +81,36 @@ export function DropView({
   useEffect(() => {
     if (dndId.current != undefined) {
       if (disabled) {
-        ctx.dndEventManager.unregisterDroppable(dndId.current)
+        dndEventManager.unregisterDroppable(dndId.current)
         dndId.current = undefined
       } else {
-        ctx.dndEventManager.updateDroppable(calcDroppable())
+        dndEventManager.updateDroppable(calcDroppable())
       }
     } else {
       if (!disabled) {
-        dndId.current = ctx.dndEventManager.registerDroppable(calcDroppable())
+        dndId.current = dndEventManager.registerDroppable(calcDroppable())
       }
     }
     return () => {
-      dndId.current !== undefined && ctx.dndEventManager.unregisterDroppable(dndId.current)
+      dndId.current !== undefined && dndEventManager.unregisterDroppable(dndId.current)
     }
-  }, [disabled, calcDroppable, ctx.dndEventManager])
+  }, [disabled, calcDroppable, dndEventManager])
 
   useEffect(() => {
-    ctx.parentOnLayout && ctx.parentOnLayout.subscribe(onLayout)
+    parentOnLayout && parentOnLayout.subscribe(onLayout)
     return () => {
-      ctx.parentOnLayout && ctx.parentOnLayout.unsubscribe(onLayout)
+      parentOnLayout && parentOnLayout.unsubscribe(onLayout)
     }
-  }, [ctx.parentOnLayout, onLayout])
+  }, [parentOnLayout, onLayout])
 
   /** context for nested elements */
-  const context: IDragContext = { ...ctx, parentOnLayout: onLayoutPubSub }
+  const context: IDragViewLayoutContext = { parentOnLayout: onLayoutPubSub }
 
   return (
-    <DragContext.Provider value={context}>
+    <DragViewLayoutContext.Provider value={context}>
       <View ref={view} onLayout={onLayout} style={style}>
         {children}
       </View>
-    </DragContext.Provider>
+    </DragViewLayoutContext.Provider>
   )
 }
