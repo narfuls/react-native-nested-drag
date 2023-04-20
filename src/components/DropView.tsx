@@ -2,8 +2,8 @@ import { View, MeasureOnSuccessCallback } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
 
 import { IDroppable, IDropViewProps, IPosition, ILayoutData } from '../types'
-import { DragContext, DragViewLayoutContext, DragCloneContext } from '../DragContext'
-import { useOnLayoutWithSubscription } from '../hooks/useOnLayoutWithSubscription'
+import { DragContext, DragCloneContext } from '../DragContext'
+import { ViewWithLayoutSubscription } from './ViewWithLayoutSubscription'
 const empty = {}
 
 export function DropView(props: PropsWithChildren<IDropViewProps>) {
@@ -94,13 +94,10 @@ function DropViewActual({
     },
     [calcDroppable, dndEventManager],
   )
-  const { onLayout, onLayoutPubSub, viewRef } = useOnLayoutWithSubscription(measureCallback)
 
   return (
-    <DragViewLayoutContext.Provider value={onLayoutPubSub}>
-      <View ref={viewRef} onLayout={onLayout} style={style}>
-        {children}
-      </View>
-    </DragViewLayoutContext.Provider>
+    <ViewWithLayoutSubscription measureCallback={measureCallback} style={style}>
+      {children}
+    </ViewWithLayoutSubscription>
   )
 }

@@ -1,9 +1,9 @@
 import { Animated, View, ViewStyle, PanResponder, Vibration, MeasureOnSuccessCallback } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
 
-import { DragContext, DragHandleContext, DragViewLayoutContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
+import { DragContext, DragHandleContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
 import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, zeroPoint } from '../types'
-import { useOnLayoutWithSubscription } from '../hooks/useOnLayoutWithSubscription'
+import { ViewWithLayoutSubscription } from './ViewWithLayoutSubscription'
 const empty = {}
 const animEndOptions = { overshootClamping: true }
 
@@ -327,17 +327,13 @@ function DragViewActual({
     [setDndEventManagerDraggable],
   )
 
-  const { onLayout, onLayoutPubSub, viewRef } = useOnLayoutWithSubscription(measureCallback)
-
   return (
     <DragHandleContext.Provider value={handleContext}>
-      <DragViewLayoutContext.Provider value={onLayoutPubSub}>
-        <DragViewOffsetContext.Provider value={offsetContext}>
-          <View {...ownPanHandlers} onLayout={onLayout} ref={viewRef} style={style}>
-            {children}
-          </View>
-        </DragViewOffsetContext.Provider>
-      </DragViewLayoutContext.Provider>
+      <DragViewOffsetContext.Provider value={offsetContext}>
+        <ViewWithLayoutSubscription {...ownPanHandlers} measureCallback={measureCallback} style={style}>
+          {children}
+        </ViewWithLayoutSubscription>
+      </DragViewOffsetContext.Provider>
     </DragHandleContext.Provider>
   )
 }
