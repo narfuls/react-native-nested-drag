@@ -1,12 +1,18 @@
 import { View } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
 
-import { IDroppable, IDropViewProps, IPosition, IDragViewLayoutContext, ILayoutData } from '../types'
-import { DragContext, DragViewLayoutContext } from '../DragContext'
+import { IDroppable, IDropViewProps, IPosition, ILayoutData } from '../types'
+import { DragContext, DragViewLayoutContext, DragCloneContext } from '../DragContext'
 import { SimplePubSub } from '../SimplePubSub'
-
 const empty = {}
-export function DropView({
+
+export function DropView(props: PropsWithChildren<IDropViewProps>) {
+  const cloned = useContext(DragCloneContext)
+  if (cloned) return <View style={props.style}>{props.children}</View>
+  return <DropViewActual {...props} />
+}
+
+function DropViewActual({
   children,
   payload,
   disabled = false,
@@ -18,7 +24,7 @@ export function DropView({
   onOver,
 }: PropsWithChildren<IDropViewProps>) {
   const { dndEventManager } = useContext(DragContext)
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
   const [style, setStyle] = useState(styleProp)
@@ -103,11 +109,8 @@ export function DropView({
     }
   }, [parentOnLayout, onLayout])
 
-  /** context for nested elements */
-  const context: IDragViewLayoutContext = { parentOnLayout: onLayoutPubSub }
-
   return (
-    <DragViewLayoutContext.Provider value={context}>
+    <DragViewLayoutContext.Provider value={onLayoutPubSub}>
       <View ref={view} onLayout={onLayout} style={style}>
         {children}
       </View>

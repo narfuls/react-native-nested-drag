@@ -6,3 +6,6 @@ TODO
 -drop inside self == double drop ?
 -simplify clone childs
 it's same actualy
++ done
+
+-be shure onLayout don't subscribes multiple times

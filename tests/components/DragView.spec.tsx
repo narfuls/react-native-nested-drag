@@ -2,14 +2,14 @@ import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import { Text, View, ViewStyle } from 'react-native'
 import React, { useContext, useState } from 'react'
 
-import { DragContext, DragViewLayoutContext, DragViewOffsetContext } from '../../src/DragContext'
+import { DragContext, DragViewLayoutContext, DragViewOffsetContext, DragCloneContext } from '../../src/DragContext'
 import { IDragContext, DragView, ISimplePubSub, DragHandleView, ITestDndEventManager, zeroPoint } from '../../src/'
 import { DndEventManager } from '../../src/EventManager'
 import { SimplePubSub } from '../../src/SimplePubSub'
 jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
 
 const TestingComponent = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
   return (
     <Text testID={'TestingComponent' + id}>
       {parentOnLayout ? 'exists' : 'null'} id:{(parentOnLayout as IMockSimplePubSub)?.id}
@@ -18,7 +18,7 @@ const TestingComponent = ({ id }: { id: number }) => {
 }
 
 const TestingComponentReciever = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
   const [count, setCout] = useState(0)
   parentOnLayout &&
     parentOnLayout.subscribe(() => {
@@ -86,7 +86,7 @@ describe('DragView', () => {
     })
     it('subscribes and unsubscribes ctx.parentOnLayout', () => {
       const { unmount } = render(
-        <DragViewLayoutContext.Provider value={{ parentOnLayout: parentOnLayout }}>
+        <DragViewLayoutContext.Provider value={parentOnLayout}>
           <DragView>
             <Text>{uniqueText}</Text>
           </DragView>
@@ -106,7 +106,7 @@ describe('DragView', () => {
       render(
         <View>
           <TestingComponent id={0} />
-          <DragViewLayoutContext.Provider value={{ parentOnLayout: parentOnLayout }}>
+          <DragViewLayoutContext.Provider value={parentOnLayout}>
             <TestingComponent id={1} />
             <DragView>
               <TestingComponent id={2} />
@@ -148,13 +148,14 @@ describe('DragView', () => {
 
       const { unmount } = render(
         <DragContext.Provider value={context}>
-          <DragViewLayoutContext.Provider value={{ parentOnLayout: pubsub }}>
+          <DragViewLayoutContext.Provider value={pubsub}>
             <DragView>
               <Text>{uniqueText}</Text>
             </DragView>
           </DragViewLayoutContext.Provider>
         </DragContext.Provider>,
       )
+      expect(context.dndEventManager.registerDraggable).toBeCalledTimes(1)
 
       const measure = jest.fn().mockImplementation((f) => {
         f(0, 0, 0, 0, 11, 11)
@@ -169,7 +170,6 @@ describe('DragView', () => {
       })
 
       expect(measure).toBeCalledTimes(1)
-      expect(context.dndEventManager.registerDraggable).toBeCalledTimes(1)
 
       act(() => {
         pubsub.publish()
@@ -181,6 +181,40 @@ describe('DragView', () => {
       unmount()
 
       expect(context.dndEventManager.unregisterDraggable).toBeCalledTimes(1)
+    })
+
+    it("doesn't register droppaple inside clone", () => {
+      const pubsub = new SimplePubSub()
+      const mockMngr: ITestDndEventManager = {
+        getDroppable: jest.fn(),
+        registerDroppable: jest.fn(),
+        updateDroppable: jest.fn(),
+        unregisterDroppable: jest.fn(),
+        getDraggable: jest.fn(),
+        registerDraggable: jest.fn().mockImplementationOnce(() => 0),
+        updateDraggable: jest.fn(),
+        unregisterDraggable: jest.fn(),
+        handleDragStart: jest.fn(),
+        handleDragEnd: jest.fn(),
+        handleDragMove: jest.fn(),
+      }
+      context = {
+        dndEventManager: mockMngr,
+        setClone: jest.fn(),
+      }
+
+      render(
+        <DragContext.Provider value={context}>
+          <DragViewLayoutContext.Provider value={pubsub}>
+            <DragCloneContext.Provider value={true}>
+              <DragView>
+                <Text>{uniqueText}</Text>
+              </DragView>
+            </DragCloneContext.Provider>
+          </DragViewLayoutContext.Provider>
+        </DragContext.Provider>,
+      )
+      expect(context.dndEventManager.registerDraggable).toBeCalledTimes(0)
     })
 
     it('calls publish onLayout for children', () => {
@@ -496,7 +530,7 @@ describe('DragView', () => {
   describe('offsets', () => {
     it('reads and sets parenntOffset', () => {
       const TestComponent = () => {
-        const { parentOffset } = useContext(DragViewOffsetContext)
+        const parentOffset = useContext(DragViewOffsetContext)
         return (
           <Text testID={'TestComponent'}>
             {parentOffset.x}/{parentOffset.y}
@@ -504,7 +538,7 @@ describe('DragView', () => {
         )
       }
       render(
-        <DragViewOffsetContext.Provider value={{ parentOffset: { x: 1, y: 2 } }}>
+        <DragViewOffsetContext.Provider value={{ x: 1, y: 2 }}>
           <DragView>
             <TestComponent />
           </DragView>
@@ -533,7 +567,7 @@ describe('DragView', () => {
     it('sets clone position with offset', () => {
       render(
         <DragContext.Provider value={context}>
-          <DragViewOffsetContext.Provider value={{ parentOffset: { x: 1, y: 2 } }}>
+          <DragViewOffsetContext.Provider value={{ x: 1, y: 2 }}>
             <DragView payload={1} movableOffset={{ x: 10, y: 20 }}>
               <Text>{uniqueText}</Text>
             </DragView>

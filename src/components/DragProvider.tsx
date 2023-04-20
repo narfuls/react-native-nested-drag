@@ -2,7 +2,7 @@ import { View, StyleSheet } from 'react-native'
 import React, { useRef, useState, PropsWithChildren, useMemo } from 'react'
 
 import { IDragContext, IDragClone, IPosition, IDragProviderProps, zeroPoint } from '../types'
-import { DragContext } from '../DragContext'
+import { DragContext, DragCloneContext } from '../DragContext'
 import { DndEventManager } from '../EventManager'
 import { DragClone } from './DragClone'
 
@@ -46,7 +46,9 @@ export function DragProvider({ children, mockEventManager, overlapMode }: PropsW
       <View style={styles.container}>
         <View ref={offsetMeasureView} onLayout={onLayout} />
         {children}
-        <DragClone clone={clone} providerOffset={windowOffset} />
+        <DragCloneContext.Provider value={true}>
+          <DragClone clone={clone} providerOffset={windowOffset} />
+        </DragCloneContext.Provider>
       </View>
     </DragContext.Provider>
   )

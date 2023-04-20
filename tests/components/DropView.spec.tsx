@@ -2,13 +2,13 @@ import { render, screen, fireEvent, act } from '@testing-library/react-native'
 import { Text, View, ViewStyle } from 'react-native'
 import React, { useContext, useState } from 'react'
 
-import { DragViewLayoutContext, DragContext } from '../../src/DragContext'
-import { IDragViewLayoutContext, IDragContext, DropView, ISimplePubSub, ITestDndEventManager, zeroPoint } from '../../src'
+import { DragViewLayoutContext, DragContext, DragCloneContext } from '../../src/DragContext'
+import { IDragContext, DropView, ISimplePubSub, ITestDndEventManager, zeroPoint } from '../../src'
 import { DndEventManager } from '../../src/EventManager'
 import { SimplePubSub } from '../../src/SimplePubSub'
 
 const TestingComponent = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
   return (
     <Text testID={'TestingComponent' + id}>
       {parentOnLayout ? 'exists' : 'null'} id:{(parentOnLayout as IMockSimplePubSub)?.id}
@@ -17,7 +17,7 @@ const TestingComponent = ({ id }: { id: number }) => {
 }
 
 const TestingComponentReciever = ({ id }: { id: number }) => {
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
   const [count, setCout] = useState(0)
   parentOnLayout &&
     parentOnLayout.subscribe(() => {
@@ -67,12 +67,12 @@ describe('DropView', () => {
 
   describe('subscription', () => {
     let parentOnLayout: IMockSimplePubSub
-    let contextLayout: IDragViewLayoutContext
+    let contextLayout: ISimplePubSub
     beforeEach(() => {
       parentOnLayout = { subscribe: jest.fn(), unsubscribe: jest.fn(), publish: jest.fn(), id: 0 }
 
       context = { dndEventManager: new DndEventManager(), setClone: jest.fn() }
-      contextLayout = { parentOnLayout: parentOnLayout }
+      contextLayout = parentOnLayout
     })
 
     it('subscribes and unsubscribes ctx.parentOnLayout', () => {
@@ -136,9 +136,7 @@ describe('DropView', () => {
         dndEventManager: mockMngr,
         setClone: jest.fn(),
       }
-      contextLayout = {
-        parentOnLayout: pubsub,
-      }
+      contextLayout = pubsub
       const { unmount } = render(
         <DragContext.Provider value={context}>
           <DragViewLayoutContext.Provider value={contextLayout}>
@@ -149,6 +147,7 @@ describe('DropView', () => {
         </DragContext.Provider>,
       )
 
+      expect(context.dndEventManager.registerDroppable).toBeCalledTimes(1)
       const measure = jest.fn().mockImplementation((f) => {
         f(0, 0, 0, 0, 11, 11)
       })
@@ -162,7 +161,6 @@ describe('DropView', () => {
       }
 
       expect(measure).toBeCalledTimes(1)
-      expect(context.dndEventManager.registerDroppable).toBeCalledTimes(1)
 
       act(() => {
         pubsub.publish()
@@ -174,6 +172,40 @@ describe('DropView', () => {
       unmount()
 
       expect(context.dndEventManager.unregisterDroppable).toBeCalledTimes(1)
+    })
+
+    it("doesn't register droppaple inside clone", () => {
+      const pubsub = new SimplePubSub()
+      const mockMngr: ITestDndEventManager = {
+        getDroppable: jest.fn(),
+        registerDroppable: jest.fn().mockImplementationOnce(() => 0),
+        updateDroppable: jest.fn(),
+        unregisterDroppable: jest.fn(),
+        getDraggable: jest.fn(),
+        registerDraggable: jest.fn(),
+        updateDraggable: jest.fn(),
+        unregisterDraggable: jest.fn(),
+        handleDragStart: jest.fn(),
+        handleDragEnd: jest.fn(),
+        handleDragMove: jest.fn(),
+      }
+      context = {
+        dndEventManager: mockMngr,
+        setClone: jest.fn(),
+      }
+      contextLayout = pubsub
+      render(
+        <DragContext.Provider value={context}>
+          <DragViewLayoutContext.Provider value={contextLayout}>
+            <DragCloneContext.Provider value={true}>
+              <DropView>
+                <Text>{uniqueText}</Text>
+              </DropView>
+            </DragCloneContext.Provider>
+          </DragViewLayoutContext.Provider>
+        </DragContext.Provider>,
+      )
+      expect(context.dndEventManager.registerDroppable).toBeCalledTimes(0)
     })
 
     it('calls publish onLayout for children', () => {

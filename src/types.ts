@@ -15,15 +15,6 @@ export interface IDragHandleContext {
   setHandleExists: () => void
 }
 
-export interface IDragViewLayoutContext {
-  /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
-  parentOnLayout?: ISimplePubSub
-}
-
-export interface IDragViewOffsetContext {
-  parentOffset: IPosition
-}
-
 export interface ISimplePubSub {
   subscribe: (onLayout: () => void) => void
   unsubscribe: (onLayout: () => void) => void

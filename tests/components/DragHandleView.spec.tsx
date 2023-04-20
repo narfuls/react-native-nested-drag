@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native'
 import { Text, ViewStyle } from 'react-native'
 import React from 'react'
 
-import { DragHandleContext } from '../../src/DragContext'
+import { DragHandleContext, DragCloneContext } from '../../src/DragContext'
 import { DragHandleView, IDragHandleContext } from '../../src/'
 
 jest.setTimeout(10000)
@@ -57,5 +57,30 @@ describe('DragHandleView', () => {
 
     // no need actual responder. just check that it spreads whatever it recieves
     expect(view.props.accessibilityHint).toEqual(uniqueText)
+  })
+
+  it('skips call setHandleExists and skips render panHandlers inside clone', () => {
+    setHandleExists = jest.fn()
+    const context: IDragHandleContext = {
+      setHandleExists: setHandleExists,
+      panHandlers: panHandlers as any,
+    }
+    render(
+      <DragHandleContext.Provider value={context}>
+        <DragCloneContext.Provider value={true}>
+          <DragHandleView style={uniqueStyle}>
+            <Text>{uniqueText}</Text>
+          </DragHandleView>
+        </DragCloneContext.Provider>
+      </DragHandleContext.Provider>,
+    )
+
+    expect(setHandleExists).toHaveBeenCalledTimes(0)
+    const view = screen.queryByText(uniqueText)?.parent
+    expect(view).toBeTruthy()
+    if (!view) throw new Error('view is null')
+
+    // no need actual responder. just check that it spreads whatever it recieves
+    expect(view.props.accessibilityHint).toEqual(undefined)
   })
 })

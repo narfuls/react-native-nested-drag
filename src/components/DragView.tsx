@@ -1,9 +1,11 @@
 import { Animated, View, ViewStyle, PanResponder, Vibration } from 'react-native'
-import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
 
-import { DragContext, DragHandleContext, DragViewLayoutContext, DragViewOffsetContext } from '../DragContext'
-import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, IDragViewLayoutContext, IDragViewOffsetContext, zeroPoint } from '../types'
+import { DragContext, DragHandleContext, DragViewLayoutContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
+import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, zeroPoint } from '../types'
 import { SimplePubSub } from '../SimplePubSub'
+const empty = {}
+const animEndOptions = { overshootClamping: true }
 
 /* offsets:
 1) provider: between clone and provider only
@@ -12,10 +14,28 @@ import { SimplePubSub } from '../SimplePubSub'
 4) parent: should be set for children via ctx as parent + movable
   - sets on dragEnd and ctx change
 */
-const empty = {}
-const animEndOptions = { overshootClamping: true }
 
-export function DragView({
+export function DragView(props: PropsWithChildren<IDragViewProps>) {
+  const cloned = useContext(DragCloneContext)
+  if (cloned) {
+    return (
+      <View
+        style={{
+          ...props.style,
+          transform: [
+            { translateX: props.movableOffset ? props.movableOffset.x : 0 },
+            { translateY: props.movableOffset ? props.movableOffset.y : 0 },
+          ],
+        }}
+      >
+        {props.children}
+      </View>
+    )
+  }
+  return <DragViewActual {...props} />
+}
+
+function DragViewActual({
   children,
   payload,
   style: styleProp = empty,
@@ -39,8 +59,8 @@ export function DragView({
   animationDropOptions = empty,
 }: PropsWithChildren<IDragViewProps>) {
   const { dndEventManager, setClone: ctxSetClone } = useContext(DragContext)
-  const { parentOnLayout } = useContext(DragViewLayoutContext)
-  const { parentOffset } = useContext(DragViewOffsetContext)
+  const parentOnLayout = useContext(DragViewLayoutContext)
+  const parentOffset = useContext(DragViewOffsetContext)
 
   const [style, setStyle] = useState(styleProp)
   const [handleExists, setHandleExists] = useState(false)
@@ -70,68 +90,199 @@ export function DragView({
     () => (handleExists || disabled ? {} : panResponder.panHandlers),
     [handleExists, panResponder, disabled],
   )
-  const setHandle = () => {
+
+  const setHandle = useCallback(() => {
     setHandleExists(true)
-  }
+  }, [])
+
   /** context for nested elements */
   const handleContext: IDragHandleContext = useMemo(() => {
-    console.log('v4 handleContext: ' + payload)
     return {
       panHandlers: panHandlers,
       setHandleExists: setHandle,
     }
   }, [panHandlers, setHandle])
 
-  const layoutContext: IDragViewLayoutContext = useMemo(() => {
-    console.log('v4 layoutContext: ' + payload)
-    return {
-      parentOnLayout: onLayoutPubSub,
+  const setDefaultStyle = useCallback(() => {
+    defaultStyleRef.current = {
+      ...styleProp,
+      transform: [{ translateX: movedOffset.current.x }, { translateY: movedOffset.current.y }],
     }
-  }, [onLayoutPubSub])
+    setStyle(defaultStyleRef.current)
+  }, [styleProp])
 
-  const offsetContext: IDragViewOffsetContext = useMemo(() => {
-    console.log('v4 offsetContext: ' + payload)
+  /** update clone
+   *  @param exists bool  set or remove @default false
+   * so setClone() sets undefined
+   * setClone(true) sets clone with default style*/
+  const setClone = useCallback(
+    (exists = false, styleParam?: ViewStyle) => {
+      if (!exists) {
+        ctxSetClone(undefined, dndId.current)
+      } else {
+        dndId.current !== undefined &&
+          ctxSetClone({
+            draggableDndId: dndId.current,
+            style: styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current,
+            pan: pan,
+            position: {
+              x: absolutePos.current.x - parentOffsetRef.current.x,
+              y: absolutePos.current.y - parentOffsetRef.current.y,
+            },
+            opacity: fadeAnim,
+            children: children,
+          })
+      }
+    },
+    [children, copyDragStyle, ctxSetClone, fadeAnim, pan],
+  )
+
+  const bounce = useCallback(() => {
+    Animated.spring(pan, {
+      ...animationEndOptions,
+      toValue: zeroPoint,
+      useNativeDriver: true,
+    }).start(() => {
+      setClone()
+    })
+  }, [setClone, animationEndOptions, pan])
+
+  const movableDragEnd = useCallback(() => {
+    pan.extractOffset()
+    movedOffset.current = {
+      x: Number(JSON.stringify(pan.x)),
+      y: Number(JSON.stringify(pan.y)),
+    }
+    setClone()
+  }, [setClone, pan])
+
+  const onEnter = useCallback(
+    (position: IPosition, payload: any) => {
+      overStyle && setStyle(overStyle)
+      copyOverStyle && setClone(true, copyOverStyle)
+      onEnterProp && onEnterProp(position, payload)
+    },
+    [onEnterProp, copyOverStyle, overStyle, setClone],
+  )
+
+  const onExit = useCallback(
+    (position: IPosition, payload: any) => {
+      overStyle && setStyle(dragStyle ? dragStyle : styleProp)
+      copyOverStyle && setClone(true)
+      onExitProp && onExitProp(position, payload)
+    },
+    [onExitProp, copyOverStyle, dragStyle, overStyle, setClone, styleProp],
+  )
+
+  const onDragStart = useCallback(
+    (position: IPosition) => {
+      if (movable) {
+        setStyle({ ...styleProp, opacity: 0 })
+      } else {
+        dragStyle && setStyle(dragStyle)
+        fadeAnim.stopAnimation()
+        pan.stopAnimation()
+      }
+      setClone(true)
+      onDragStartProp && onDragStartProp(position)
+    },
+    [onDragStartProp, dragStyle, fadeAnim, movable, pan, setClone, styleProp],
+  )
+
+  const onDragEnd = useCallback(
+    (position: IPosition) => {
+      if (movable) {
+        movableDragEnd()
+      } else {
+        bounce()
+      }
+      setDefaultStyle()
+      onDragEndProp && onDragEndProp(position, movedOffset.current)
+    },
+    [onDragEndProp, bounce, movable, movableDragEnd, setDefaultStyle],
+  )
+
+  const onDrop: (position: IPosition, _movedOffset: any, payload: any) => void = useCallback(
+    (position: IPosition, _movedOffset: any, payload: any) => {
+      if (movable) {
+        movableDragEnd()
+      } else {
+        fadeOut()
+      }
+      setDefaultStyle()
+      onDropProp && onDropProp(position, movedOffset.current, payload)
+    },
+    [movable, movableDragEnd, setDefaultStyle, onDropProp],
+  )
+
+  const setDndEventManagerDraggable = useCallback(() => {
+    //  dnd handlers should contain uptodate context
+    const draggable: IDraggable = {
+      id: dndId.current,
+      onDragStart: onDragStart,
+      onDrag: onDrag,
+      onDragEnd: onDragEnd,
+      onDrop: onDrop,
+      onEnter: onEnter,
+      onExit: onExit,
+      onOver: onOver,
+      payload: payload,
+    }
+    if (dndId.current != undefined) {
+      dndEventManager.updateDraggable(draggable)
+    } else {
+      dndId.current = dndEventManager.registerDraggable(draggable)
+    }
+  }, [payload, onDrag, onOver, dndEventManager, onDragEnd, onDragStart, onDrop, onEnter, onExit])
+  const fadeOut = useCallback(() => {
+    Animated.timing(fadeAnim, {
+      ...animationDropOptions,
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(() => {
+      pan.setValue(zeroPoint) // remove flashing on second drag
+      fadeAnim.setValue(1)
+      setDndEventManagerDraggable()
+      setClone()
+    })
+  }, [setClone, animationDropOptions, fadeAnim, pan, setDndEventManagerDraggable])
+  const offsetContext: IPosition = useMemo(() => {
     parentOffsetRef.current = {
       x: parentOffset.x,
       y: parentOffset.y,
     }
     setDndEventManagerDraggable && setDndEventManagerDraggable()
     return {
-      parentOffset: {
-        x: parentOffset.x - movedOffset.current.x,
-        y: parentOffset.y - movedOffset.current.y,
-      },
+      x: parentOffset.x - movedOffset.current.x,
+      y: parentOffset.y - movedOffset.current.y,
     }
-  }, [parentOffset, movedOffset.current])
+  }, [parentOffset, movedOffset.current, setDndEventManagerDraggable])
+
+  //#region refresh draggable storred in IDndEventManager
+  /* (it's important cos manager may call event whith old(irrelevant) context)*/
+  useEffect(() => {
+    setDndEventManagerDraggable()
+  }, [setDndEventManagerDraggable])
 
   useEffect(() => {
     setDefaultStyle()
-  }, [styleProp])
+  }, [setDefaultStyle])
 
   useEffect(() => {
     movedOffset.current = movableOffset
     pan.setOffset(movableOffset)
     setDefaultStyle()
-  }, [movableOffset])
+  }, [movableOffset, pan, setDefaultStyle])
 
   /* for subscribtions */
   useEffect(() => {
-    if (parentOnLayout) {
-      parentOnLayout.subscribe(onLayout)
-      return () => {
-        parentOnLayout && parentOnLayout.unsubscribe(onLayout)
-        dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
-      }
-    } else {
-      return () => {
-        dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
-      }
+    return () => {
+      dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
     }
-  }, [])
+  }, [dndEventManager])
 
   /* create and refresh panHandlers */
   useEffect(() => {
-    console.log('new PanResponder: ' + payload)
     let onLongPressTimeout: NodeJS.Timeout
     let shouldDrag = false
     setPanResponder(
@@ -168,146 +319,10 @@ export function DragView({
       }),
     )
   }, [longPressDelay, vibroDuration, pan, dndEventManager])
-
-  const setDndEventManagerDraggable = () => {
-    //  dnd handlers should contain uptodate context
-    const draggable: IDraggable = {
-      id: dndId.current,
-      onDragStart: onDragStart,
-      onDrag: onDrag,
-      onDragEnd: onDragEnd,
-      onDrop: onDrop,
-      onEnter: onEnter,
-      onExit: onExit,
-      onOver: onOver,
-      payload: payload,
-    }
-    if (dndId.current != undefined) {
-      dndEventManager.updateDraggable(draggable)
-    } else {
-      dndId.current = dndEventManager.registerDraggable(draggable)
-    }
-  }
-
-  //#region refresh draggable storred in IDndEventManager
-  /* (it's important cos manager may call event whith old(irrelevant) context)*/
-  useEffect(() => {
-    setDndEventManagerDraggable()
-  }, [children, payload, onDrag, onOver, styleProp, dragStyle, overStyle, copyDragStyle, copyOverStyle])
-
   //#endregion
 
-  const setDefaultStyle = () => {
-    defaultStyleRef.current = {
-      ...styleProp,
-      transform: [{ translateX: movedOffset.current.x }, { translateY: movedOffset.current.y }],
-    }
-    setStyle(defaultStyleRef.current)
-  }
-
-  /** update clone
-   *  @param exists bool  set or remove @default false
-   * so setClone() sets undefined
-   * setClone(true) sets clone with default style*/
-  const setClone = (exists = false, styleParam?: ViewStyle) => {
-    if (!exists) {
-      ctxSetClone(undefined, dndId.current)
-    } else {
-      dndId.current !== undefined &&
-        ctxSetClone({
-          draggableDndId: dndId.current,
-          style: styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current,
-          pan: pan,
-          position: {
-            x: absolutePos.current.x - parentOffsetRef.current.x,
-            y: absolutePos.current.y - parentOffsetRef.current.y,
-          },
-          opacity: fadeAnim,
-          children: children,
-        })
-    }
-  }
-
-  //#region dnd events
-  const onEnter = (position: IPosition, payload: any) => {
-    overStyle && setStyle(overStyle)
-    copyOverStyle && setClone(true, copyOverStyle)
-    onEnterProp && onEnterProp(position, payload)
-  }
-
-  const onExit = (position: IPosition, payload: any) => {
-    overStyle && setStyle(dragStyle ? dragStyle : styleProp)
-    copyOverStyle && setClone(true)
-    onExitProp && onExitProp(position, payload)
-  }
-
-  const onDragStart = (position: IPosition) => {
-    if (movable) {
-      setStyle({ ...styleProp, opacity: 0 })
-    } else {
-      dragStyle && setStyle(dragStyle)
-      fadeAnim.stopAnimation()
-      pan.stopAnimation()
-    }
-    setClone(true)
-    onDragStartProp && onDragStartProp(position)
-  }
-
-  const onDragEnd = (position: IPosition) => {
-    if (movable) {
-      movableDragEnd()
-    } else {
-      bounce()
-    }
-    setDefaultStyle()
-    onDragEndProp && onDragEndProp(position, movedOffset.current)
-  }
-
-  const onDrop = (position: IPosition, _movedOffset: any, payload: any) => {
-    if (movable) {
-      movableDragEnd()
-    } else {
-      fadeOut()
-    }
-    setDefaultStyle()
-    onDropProp && onDropProp(position, movedOffset.current, payload)
-  }
-  //#endregion
-
-  const fadeOut = () => {
-    Animated.timing(fadeAnim, {
-      ...animationDropOptions,
-      toValue: 0,
-      useNativeDriver: true,
-    }).start(() => {
-      pan.setValue(zeroPoint) // remove flashing on second drag
-      fadeAnim.setValue(1)
-      setDndEventManagerDraggable()
-      setClone()
-    })
-  }
-
-  const bounce = () => {
-    Animated.spring(pan, {
-      ...animationEndOptions,
-      toValue: zeroPoint,
-      useNativeDriver: true,
-    }).start(() => {
-      setClone()
-    })
-  }
-
-  const movableDragEnd = () => {
-    pan.extractOffset()
-    movedOffset.current = {
-      x: Number(JSON.stringify(pan.x)),
-      y: Number(JSON.stringify(pan.y)),
-    }
-    setClone()
-  }
-
-  //measore component
-  const onLayout = () => {
+  //measure component
+  const onLayout = useCallback(() => {
     if (view?.current) {
       view.current.measure((_x, _y, _width, _height, pageX, pageY) => {
         absolutePos.current = {
@@ -318,11 +333,18 @@ export function DragView({
       })
     }
     onLayoutPubSub.publish()
-  }
+  }, [onLayoutPubSub, setDndEventManagerDraggable])
+
+  useEffect(() => {
+    parentOnLayout && parentOnLayout.subscribe(onLayout)
+    return () => {
+      parentOnLayout && parentOnLayout.unsubscribe(onLayout)
+    }
+  }, [parentOnLayout, onLayout])
 
   return (
     <DragHandleContext.Provider value={handleContext}>
-      <DragViewLayoutContext.Provider value={layoutContext}>
+      <DragViewLayoutContext.Provider value={onLayoutPubSub}>
         <DragViewOffsetContext.Provider value={offsetContext}>
           <View {...ownPanHandlers} onLayout={onLayout} ref={view} style={style}>
             {children}
