@@ -1,9 +1,9 @@
-import { Animated, View, ViewStyle, PanResponder, Vibration } from 'react-native'
+import { Animated, View, ViewStyle, PanResponder, Vibration, MeasureOnSuccessCallback } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
 
 import { DragContext, DragHandleContext, DragViewLayoutContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
 import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, zeroPoint } from '../types'
-import { SimplePubSub } from '../SimplePubSub'
+import { useOnLayoutWithSubscription } from '../hooks/useOnLayoutWithSubscription'
 const empty = {}
 const animEndOptions = { overshootClamping: true }
 
@@ -59,7 +59,6 @@ function DragViewActual({
   animationDropOptions = empty,
 }: PropsWithChildren<IDragViewProps>) {
   const { dndEventManager, setClone: ctxSetClone } = useContext(DragContext)
-  const parentOnLayout = useContext(DragViewLayoutContext)
   const parentOffset = useContext(DragViewOffsetContext)
 
   const [style, setStyle] = useState(styleProp)
@@ -74,10 +73,6 @@ function DragViewActual({
   const parentOffsetRef = useRef<IPosition>(parentOffset)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
-  /** Subscribe to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
-  const onLayoutPubSub = useRef(new SimplePubSub()).current
-  /** viewRef to measure */
-  const view = useRef<View>(null)
   /** initial absolutePos * * (if you wondered why append and then distract parentOffsetRef ?
    * Coz absolutePos updates only inside 'measure' and parentOffsetRef may change while measure not triggered.
    * So it contains parent movedOffset) */
@@ -321,26 +316,20 @@ function DragViewActual({
   }, [longPressDelay, vibroDuration, pan, dndEventManager])
   //#endregion
 
-  //measure component
-  const onLayout = useCallback(() => {
-    if (view?.current) {
-      view.current.measure((_x, _y, _width, _height, pageX, pageY) => {
-        absolutePos.current = {
-          x: pageX + parentOffsetRef.current.x - movedOffset.current.x,
-          y: pageY + parentOffsetRef.current.y - movedOffset.current.y,
-        }
-        setDndEventManagerDraggable()
-      })
-    }
-    onLayoutPubSub.publish()
-  }, [onLayoutPubSub, setDndEventManagerDraggable])
+  /** viewRef to measure */
+  const view = useRef<View>(null)
+  const measureCallback = useCallback<MeasureOnSuccessCallback>(
+    (_x, _y, _width, _height, pageX, pageY) => {
+      absolutePos.current = {
+        x: pageX + parentOffsetRef.current.x - movedOffset.current.x,
+        y: pageY + parentOffsetRef.current.y - movedOffset.current.y,
+      }
+      setDndEventManagerDraggable()
+    },
+    [setDndEventManagerDraggable],
+  )
 
-  useEffect(() => {
-    parentOnLayout && parentOnLayout.subscribe(onLayout)
-    return () => {
-      parentOnLayout && parentOnLayout.unsubscribe(onLayout)
-    }
-  }, [parentOnLayout, onLayout])
+  const { onLayout, onLayoutPubSub } = useOnLayoutWithSubscription(view, measureCallback)
 
   return (
     <DragHandleContext.Provider value={handleContext}>
