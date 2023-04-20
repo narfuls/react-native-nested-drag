@@ -87,8 +87,6 @@ function DropViewActual({
     }
   }, [disabled, calcDroppable, dndEventManager])
 
-  /** viewRef to measure */
-  const view = useRef<View>(null)
   const measureCallback = useCallback<MeasureOnSuccessCallback>(
     (_x, _y, width, height, pageX, pageY) => {
       layoutRef.current = { x: pageX, y: pageY, width: width, height: height }
@@ -96,12 +94,11 @@ function DropViewActual({
     },
     [calcDroppable, dndEventManager],
   )
-
-  const { onLayout, onLayoutPubSub } = useOnLayoutWithSubscription(view, measureCallback)
+  const { onLayout, onLayoutPubSub, viewRef } = useOnLayoutWithSubscription(measureCallback)
 
   return (
     <DragViewLayoutContext.Provider value={onLayoutPubSub}>
-      <View ref={view} onLayout={onLayout} style={style}>
+      <View ref={viewRef} onLayout={onLayout} style={style}>
         {children}
       </View>
     </DragViewLayoutContext.Provider>

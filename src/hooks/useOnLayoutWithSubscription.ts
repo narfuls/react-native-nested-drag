@@ -1,9 +1,11 @@
-import React, { useRef, useContext, useEffect, useCallback } from 'react'
+import { useRef, useContext, useEffect, useCallback } from 'react'
 import { View, MeasureOnSuccessCallback } from 'react-native'
 import { DragViewLayoutContext } from '../DragContext'
 import { SimplePubSub } from '../SimplePubSub'
 /** Subscribes to measure view (in nested view 'onLayout' event triggers only once when rendered first time)  */
-export const useOnLayoutWithSubscription = (viewRef: React.RefObject<View>, measureCallback: MeasureOnSuccessCallback) => {
+export const useOnLayoutWithSubscription = ( measureCallback: MeasureOnSuccessCallback) => {
+  /** viewRef to measure */
+  const viewRef = useRef<View>(null)
   const onLayoutPubSub = useRef(new SimplePubSub()).current
   const parentOnLayout = useContext(DragViewLayoutContext)
 
@@ -21,5 +23,5 @@ export const useOnLayoutWithSubscription = (viewRef: React.RefObject<View>, meas
     }
   }, [parentOnLayout, onLayout])
 
-  return { onLayout, onLayoutPubSub }
+  return { onLayout, onLayoutPubSub, viewRef }
 }

@@ -316,8 +316,6 @@ function DragViewActual({
   }, [longPressDelay, vibroDuration, pan, dndEventManager])
   //#endregion
 
-  /** viewRef to measure */
-  const view = useRef<View>(null)
   const measureCallback = useCallback<MeasureOnSuccessCallback>(
     (_x, _y, _width, _height, pageX, pageY) => {
       absolutePos.current = {
@@ -329,13 +327,13 @@ function DragViewActual({
     [setDndEventManagerDraggable],
   )
 
-  const { onLayout, onLayoutPubSub } = useOnLayoutWithSubscription(view, measureCallback)
+  const { onLayout, onLayoutPubSub, viewRef } = useOnLayoutWithSubscription(measureCallback)
 
   return (
     <DragHandleContext.Provider value={handleContext}>
       <DragViewLayoutContext.Provider value={onLayoutPubSub}>
         <DragViewOffsetContext.Provider value={offsetContext}>
-          <View {...ownPanHandlers} onLayout={onLayout} ref={view} style={style}>
+          <View {...ownPanHandlers} onLayout={onLayout} ref={viewRef} style={style}>
             {children}
           </View>
         </DragViewOffsetContext.Provider>
