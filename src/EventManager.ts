@@ -31,7 +31,6 @@ export class DndEventManager implements IDndEventManager {
   }
 
   unregisterDroppable(id: number): void {
-    console.log('unregisterDroppable' + id)
     this.droppables = this.droppables.filter((d) => id !== d.id)
   }
 

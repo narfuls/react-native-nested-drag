@@ -70,22 +70,23 @@ function DropViewActual({
   }, [styleProp])
 
   useEffect(() => {
-    if (dndId.current != undefined) {
-      if (disabled) {
-        dndEventManager.unregisterDroppable(dndId.current)
-        dndId.current = undefined
+    if (disabled) {
+      dndId.current !== undefined && dndEventManager.unregisterDroppable(dndId.current)
+      dndId.current = undefined
+    } else {
+      if (dndId.current === undefined) {
+        dndId.current = dndEventManager.registerDroppable(calcDroppable())
       } else {
         dndEventManager.updateDroppable(calcDroppable())
       }
-    } else {
-      if (!disabled) {
-        dndId.current = dndEventManager.registerDroppable(calcDroppable())
-      }
     }
+  }, [disabled, calcDroppable, dndEventManager])
+
+  useEffect(() => {
     return () => {
       dndId.current !== undefined && dndEventManager.unregisterDroppable(dndId.current)
     }
-  }, [disabled, calcDroppable, dndEventManager])
+  }, [dndEventManager])
 
   const measureCallback = useCallback<MeasureOnSuccessCallback>(
     (_x, _y, width, height, pageX, pageY) => {
