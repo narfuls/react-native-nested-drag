@@ -4,7 +4,7 @@ import React, { useRef, useState, PropsWithChildren, useMemo } from 'react'
 import { IDragContext, IDragClone, IPosition, IDragProviderProps, zeroPoint } from '../types'
 import { DragContext, DragCloneContext } from '../DragContext'
 import { DndEventManager } from '../EventManager'
-import { DragClone } from './DragClone'
+import { DragClone } from './internal/DragClone'
 
 export function DragProvider({ children, mockEventManager, overlapMode }: PropsWithChildren<IDragProviderProps>) {
   const eventManager = useRef(mockEventManager ? mockEventManager : new DndEventManager(overlapMode)).current

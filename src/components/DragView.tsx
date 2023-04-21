@@ -1,9 +1,9 @@
 import { Animated, View, ViewStyle, PanResponder, Vibration, MeasureOnSuccessCallback } from 'react-native'
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
 
-import { DragContext, DragHandleContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
-import { IDragViewProps, IDraggable, IPosition, IDragHandleContext, zeroPoint } from '../types'
-import { ViewWithLayoutSubscription } from './ViewWithLayoutSubscription'
+import { DragContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
+import { IDragViewProps, IDraggable, IPosition, zeroPoint } from '../types'
+import { DragViewWithHandleAndMeasue } from './internal/DragViewWithHandleAndMeasue'
 const empty = {}
 const animEndOptions = { overshootClamping: true }
 
@@ -12,9 +12,7 @@ const animEndOptions = { overshootClamping: true }
 2) movable: 
   - sets on dragEnd as pan change
 4) parent: should be set for children via ctx as parent + movable
-  - sets on dragEnd and ctx change
-*/
-
+  - sets on dragEnd and ctx change*/
 export function DragView(props: PropsWithChildren<IDragViewProps>) {
   const cloned = useContext(DragCloneContext)
   if (cloned) {
@@ -62,7 +60,6 @@ function DragViewActual({
   const parentOffset = useContext(DragViewOffsetContext)
 
   const [style, setStyle] = useState(styleProp)
-  const [handleExists, setHandleExists] = useState(false)
   const [panResponder, setPanResponder] = useState(PanResponder.create({}))
   const [fadeAnim] = useState(new Animated.Value(1))
 
@@ -77,26 +74,6 @@ function DragViewActual({
    * Coz absolutePos updates only inside 'measure' and parentOffsetRef may change while measure not triggered.
    * So it contains parent movedOffset) */
   const absolutePos = useRef<IPosition>(zeroPoint)
-
-  const panHandlers = useMemo(() => (disabled ? {} : panResponder.panHandlers), [panResponder, disabled])
-
-  const ownPanHandlers = useMemo(
-    // do not listen gests when there is a handle for it
-    () => (handleExists || disabled ? {} : panResponder.panHandlers),
-    [handleExists, panResponder, disabled],
-  )
-
-  const setHandle = useCallback(() => {
-    setHandleExists(true)
-  }, [])
-
-  /** context for nested elements */
-  const handleContext: IDragHandleContext = useMemo(() => {
-    return {
-      panHandlers: panHandlers,
-      setHandleExists: setHandle,
-    }
-  }, [panHandlers, setHandle])
 
   const setDefaultStyle = useCallback(() => {
     defaultStyleRef.current = {
@@ -229,6 +206,7 @@ function DragViewActual({
       dndId.current = dndEventManager.registerDraggable(draggable)
     }
   }, [payload, onDrag, onOver, dndEventManager, onDragEnd, onDragStart, onDrop, onEnter, onExit])
+
   const fadeOut = useCallback(() => {
     Animated.timing(fadeAnim, {
       ...animationDropOptions,
@@ -241,6 +219,7 @@ function DragViewActual({
       setClone()
     })
   }, [setClone, animationDropOptions, fadeAnim, pan, setDndEventManagerDraggable])
+
   const offsetContext: IPosition = useMemo(() => {
     parentOffsetRef.current = {
       x: parentOffset.x,
@@ -328,12 +307,10 @@ function DragViewActual({
   )
 
   return (
-    <DragHandleContext.Provider value={handleContext}>
-      <DragViewOffsetContext.Provider value={offsetContext}>
-        <ViewWithLayoutSubscription {...ownPanHandlers} measureCallback={measureCallback} style={style}>
-          {children}
-        </ViewWithLayoutSubscription>
-      </DragViewOffsetContext.Provider>
-    </DragHandleContext.Provider>
+    <DragViewOffsetContext.Provider value={offsetContext}>
+      <DragViewWithHandleAndMeasue disabled={disabled} panHandlers={panResponder.panHandlers} measureCallback={measureCallback} style={style}>
+        {children}
+      </DragViewWithHandleAndMeasue>
+    </DragViewOffsetContext.Provider>
   )
 }

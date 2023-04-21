@@ -3,7 +3,7 @@ import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useC
 
 import { IDroppable, IDropViewProps, IPosition, ILayoutData } from '../types'
 import { DragContext, DragCloneContext } from '../DragContext'
-import { ViewWithLayoutSubscription } from './ViewWithLayoutSubscription'
+import { ViewWithLayoutSubscription } from './internal/ViewWithLayoutSubscription'
 const empty = {}
 
 export function DropView(props: PropsWithChildren<IDropViewProps>) {

@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react-native'
 import { Text, ViewStyle, Animated } from 'react-native'
 import React from 'react'
 
-import { DragClone } from '../../src/components/DragClone'
+import { DragClone } from '../../../src/components/internal/DragClone'
 
 jest.setTimeout(10000)
 describe('DragClone', () => {

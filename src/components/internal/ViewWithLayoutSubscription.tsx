@@ -1,8 +1,8 @@
 import { View, MeasureOnSuccessCallback, ViewProps } from 'react-native'
 import React, { useRef, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
 
-import { DragViewLayoutContext } from '../DragContext'
-import { SimplePubSub } from '../SimplePubSub'
+import { DragViewLayoutContext } from '../../DragContext'
+import { SimplePubSub } from '../../SimplePubSub'
 
 export interface IViewWithLayoutSubscriptionProps extends ViewProps {
   measureCallback: MeasureOnSuccessCallback

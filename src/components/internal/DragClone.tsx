@@ -1,7 +1,7 @@
 import { Animated } from 'react-native'
 import React from 'react'
 
-import { IDragCloneProps } from '../types'
+import { IDragCloneProps } from '../../types'
 
 export function DragClone({ clone, providerOffset }: IDragCloneProps) {
   if (clone) {
