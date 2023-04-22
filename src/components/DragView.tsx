@@ -66,23 +66,22 @@ function DragViewActual({
   const pan = useRef(new Animated.ValueXY()).current
   const defaultStyleRef = useRef(styleProp)
   /** unlike pan updates only on movable dragend */
-  const movedOffset = useRef<IPosition>(movableOffset)
-  const parentOffsetRef = useRef<IPosition>(parentOffset)
+  const movedOffsetRef = useRef<IPosition>(movableOffset)
+  const [movedOffset, setMovedOffset] = useState<IPosition>(movableOffset)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
-  /** initial absolutePos * * (if you wondered why append and then distract parentOffsetRef ?
-   * Coz absolutePos updates only inside 'measure' and parentOffsetRef may change while measure not triggered.
+  /** initial absolutePos * * (if you wondered why append and then distract parentOffset ?
+   * Coz absolutePos updates only inside 'measure' and parentOffset may change while measure not triggered.
    * So it contains parent movedOffset) */
   const absolutePos = useRef<IPosition>(zeroPoint)
 
   const setDefaultStyle = useCallback(() => {
     defaultStyleRef.current = {
       ...styleProp,
-      transform: [{ translateX: movedOffset.current.x }, { translateY: movedOffset.current.y }],
+      transform: [{ translateX: movedOffsetRef.current.x }, { translateY: movedOffsetRef.current.y }],
     }
     setStyle(defaultStyleRef.current)
   }, [styleProp])
-
   /** update clone
    *  @param exists bool  set or remove @default false
    * so setClone() sets undefined
@@ -98,15 +97,15 @@ function DragViewActual({
             style: styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current,
             pan: pan,
             position: {
-              x: absolutePos.current.x - parentOffsetRef.current.x,
-              y: absolutePos.current.y - parentOffsetRef.current.y,
+              x: absolutePos.current.x - parentOffset.x,
+              y: absolutePos.current.y - parentOffset.y,
             },
             opacity: fadeAnim,
             children: children,
           })
       }
     },
-    [children, copyDragStyle, ctxSetClone, fadeAnim, pan],
+    [parentOffset, children, copyDragStyle, ctxSetClone, fadeAnim, pan],
   )
 
   const bounce = useCallback(() => {
@@ -119,12 +118,25 @@ function DragViewActual({
     })
   }, [setClone, animationEndOptions, pan])
 
+  const fadeOut = useCallback(() => {
+    Animated.timing(fadeAnim, {
+      ...animationDropOptions,
+      toValue: 0,
+      useNativeDriver: true,
+    }).start(() => {
+      pan.setValue(zeroPoint) // remove flashing on second drag
+      fadeAnim.setValue(1)
+      setClone()
+    })
+  }, [setClone, animationDropOptions, fadeAnim, pan])
+
   const movableDragEnd = useCallback(() => {
     pan.extractOffset()
-    movedOffset.current = {
+    movedOffsetRef.current = {
       x: Number(JSON.stringify(pan.x)),
       y: Number(JSON.stringify(pan.y)),
     }
+    setMovedOffset(movedOffsetRef.current)
     setClone()
   }, [setClone, pan])
 
@@ -169,7 +181,7 @@ function DragViewActual({
         bounce()
       }
       setDefaultStyle()
-      onDragEndProp && onDragEndProp(position, movedOffset.current)
+      onDragEndProp && onDragEndProp(position, movedOffsetRef.current)
     },
     [onDragEndProp, bounce, movable, movableDragEnd, setDefaultStyle],
   )
@@ -182,9 +194,9 @@ function DragViewActual({
         fadeOut()
       }
       setDefaultStyle()
-      onDropProp && onDropProp(position, movedOffset.current, payload)
+      onDropProp && onDropProp(position, movedOffsetRef.current, payload)
     },
-    [movable, movableDragEnd, setDefaultStyle, onDropProp],
+    [movable, movableDragEnd, setDefaultStyle, onDropProp, fadeOut],
   )
 
   const setDndEventManagerDraggable = useCallback(() => {
@@ -207,33 +219,6 @@ function DragViewActual({
     }
   }, [payload, onDrag, onOver, dndEventManager, onDragEnd, onDragStart, onDrop, onEnter, onExit])
 
-  const fadeOut = useCallback(() => {
-    Animated.timing(fadeAnim, {
-      ...animationDropOptions,
-      toValue: 0,
-      useNativeDriver: true,
-    }).start(() => {
-      pan.setValue(zeroPoint) // remove flashing on second drag
-      fadeAnim.setValue(1)
-      setDndEventManagerDraggable()
-      setClone()
-    })
-  }, [setClone, animationDropOptions, fadeAnim, pan, setDndEventManagerDraggable])
-
-  const offsetContext: IPosition = useMemo(() => {
-    parentOffsetRef.current = {
-      x: parentOffset.x,
-      y: parentOffset.y,
-    }
-    setDndEventManagerDraggable && setDndEventManagerDraggable()
-    return {
-      x: parentOffset.x - movedOffset.current.x,
-      y: parentOffset.y - movedOffset.current.y,
-    }
-  }, [parentOffset, movedOffset.current, setDndEventManagerDraggable])
-
-  //#region refresh draggable storred in IDndEventManager
-  /* (it's important cos manager may call event whith old(irrelevant) context)*/
   useEffect(() => {
     setDndEventManagerDraggable()
   }, [setDndEventManagerDraggable])
@@ -243,12 +228,12 @@ function DragViewActual({
   }, [setDefaultStyle])
 
   useEffect(() => {
-    movedOffset.current = movableOffset
+    movedOffsetRef.current = movableOffset
+    setMovedOffset(movableOffset)
     pan.setOffset(movableOffset)
     setDefaultStyle()
   }, [movableOffset, pan, setDefaultStyle])
 
-  /* for subscribtions */
   useEffect(() => {
     return () => {
       dndId.current !== undefined && dndEventManager.unregisterDraggable(dndId.current)
@@ -293,22 +278,29 @@ function DragViewActual({
       }),
     )
   }, [longPressDelay, vibroDuration, pan, dndEventManager])
-  //#endregion
 
+  const offsetContext: IPosition = useMemo(() => {
+    return {
+      x: parentOffset.x - movedOffset.x,
+      y: parentOffset.y - movedOffset.y,
+    }
+  }, [parentOffset, movedOffset])
+
+  const panHandlers = useMemo(() => (disabled ? {} : panResponder.panHandlers), [panResponder, disabled])
   const measureCallback = useCallback<MeasureOnSuccessCallback>(
     (_x, _y, _width, _height, pageX, pageY) => {
       absolutePos.current = {
-        x: pageX + parentOffsetRef.current.x - movedOffset.current.x,
-        y: pageY + parentOffsetRef.current.y - movedOffset.current.y,
+        x: pageX + parentOffset.x - movedOffsetRef.current.x,
+        y: pageY + parentOffset.y - movedOffsetRef.current.y,
       }
       setDndEventManagerDraggable()
     },
-    [setDndEventManagerDraggable],
+    [parentOffset, setDndEventManagerDraggable],
   )
 
   return (
     <DragViewOffsetContext.Provider value={offsetContext}>
-      <DragViewWithHandleAndMeasue disabled={disabled} panHandlers={panResponder.panHandlers} measureCallback={measureCallback} style={style}>
+      <DragViewWithHandleAndMeasue panHandlers={panHandlers} measureCallback={measureCallback} style={style}>
         {children}
       </DragViewWithHandleAndMeasue>
     </DragViewOffsetContext.Provider>
