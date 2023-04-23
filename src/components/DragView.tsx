@@ -142,20 +142,32 @@ function DragViewActual({
 
   const onEnter = useCallback(
     (position: IPosition, payload: any) => {
-      overStyle && setStyle(overStyle)
-      copyOverStyle && setClone(true, copyOverStyle)
+      if (movable) {
+        if (copyOverStyle || overStyle) {
+          setClone(true, copyOverStyle ? copyOverStyle : overStyle)
+        }
+      } else {
+        overStyle && setStyle(overStyle)
+        copyOverStyle && setClone(true, copyOverStyle)
+      }
       onEnterProp && onEnterProp(position, payload)
     },
-    [onEnterProp, copyOverStyle, overStyle, setClone],
+    [onEnterProp, copyOverStyle, overStyle, setClone, movable],
   )
 
   const onExit = useCallback(
     (position: IPosition, payload: any) => {
-      overStyle && setStyle(dragStyle ? dragStyle : styleProp)
-      copyOverStyle && setClone(true)
+      if (movable) {
+        if (copyOverStyle || overStyle) {
+          setClone(true)
+        }
+      } else {
+        overStyle && setStyle(dragStyle ? dragStyle : styleProp)
+        copyOverStyle && setClone(true)
+      }
       onExitProp && onExitProp(position, payload)
     },
-    [onExitProp, copyOverStyle, dragStyle, overStyle, setClone, styleProp],
+    [onExitProp, copyOverStyle, dragStyle, overStyle, setClone, styleProp, movable],
   )
 
   const onDragStart = useCallback(
