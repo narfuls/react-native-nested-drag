@@ -198,15 +198,18 @@ function DragViewActual({
     [onDragEndProp, bounce, movable, movableDragEnd, setDefaultStyle],
   )
 
-  const onDrop: (position: IPosition, _movedOffset: any, payload: any) => void = useCallback(
-    (position: IPosition, _movedOffset: any, payload: any) => {
-      if (movable) {
-        movableDragEnd()
-      } else {
-        fadeOut()
+  const onDrop: (position: IPosition, _movedOffset: any, payload: any, overlapIndex?: number) => void = useCallback(
+    (position: IPosition, _movedOffset: any, payload: any, overlapIndex?: number) => {
+      if (!overlapIndex) {
+        //overlapIndex: only first(0) or undefinded to prevent multiple animation call
+        if (movable) {
+          movableDragEnd()
+        } else {
+          fadeOut()
+        }
+        setDefaultStyle()
       }
-      setDefaultStyle()
-      onDropProp && onDropProp(position, movedOffsetRef.current, payload)
+      onDropProp && onDropProp(position, movedOffsetRef.current, payload, overlapIndex)
     },
     [movable, movableDragEnd, setDefaultStyle, onDropProp, fadeOut],
   )

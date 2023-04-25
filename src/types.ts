@@ -31,7 +31,7 @@ export type DraggableDragStart = (position: IPosition) => void
 
 export type DraggableEnd = (position: IPosition, movableOffset?: IPosition) => void
 
-export type DraggableDrop = (position: IPosition, movableOffset?: IPosition, payload?: any) => void
+export type DraggableDrop = (position: IPosition, movableOffset?: IPosition, payload?: any, overlapIndex?: number) => void
 
 export interface IDroppableEvents {
   /** Called when drag ends over it */
