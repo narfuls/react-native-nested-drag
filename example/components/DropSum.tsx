@@ -1,15 +1,13 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useRef, useState } from 'react'
+import React, { useState } from 'react'
 
 import { DragView, DropView } from 'react-native-nested-drag'
 
 export function DropSum() {
   const [sum, setSum] = useState(0)
   const [disabled, setDisabled] = useState(false)
-  const sumRef = useRef(0)
   const add = (num: number) => {
-    sumRef.current += num
-    setSum(sumRef.current)
+    setSum(sum + num)
   }
   return (
     <View style={styles.container}>

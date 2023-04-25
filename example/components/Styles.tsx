@@ -17,7 +17,14 @@ export function Styles() {
           copyDragStyle={styles.itemCopyDragStyle}
           copyOverStyle={styles.itemCopyOverStyle}
         />
-        <DragView movable style={styles.item} dragStyle={styles.itemDragStyle} overStyle={styles.itemOverStyle} />
+        <DragView
+          movable
+          style={styles.item}
+          dragStyle={styles.itemDragStyle}
+          overStyle={styles.itemOverStyle}
+          copyDragStyle={styles.itemCopyDragStyle}
+          copyOverStyle={styles.itemCopyOverStyle}
+        />
       </View>
     </>
   )

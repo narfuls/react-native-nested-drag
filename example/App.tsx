@@ -42,15 +42,19 @@ export default function App() {
             </TouchableOpacity>
           ))}
       </View>
-      {page != Pages.OverlapAll && (
+      {page != Pages.OverlapAll && page != Pages.NestedDrop && (
         <DragProvider>
           {page == Pages.DropSum && <DropSum />}
           {page == Pages.Styles && <Styles />}
           {page == Pages.DragMode && <DragMode />}
           {page == Pages.Draghandle && <Draghandle />}
-          {page == Pages.NestedDrop && <NestedDrop />}
           {page == Pages.Nested && <Nested />}
           {page == Pages.NestedMovable && <NestedMovable />}
+        </DragProvider>
+      )}
+      {page == Pages.NestedDrop && (
+        <DragProvider overlapMode={'first'}>
+          <NestedDrop />
         </DragProvider>
       )}
       {page == Pages.OverlapAll && (

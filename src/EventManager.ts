@@ -72,20 +72,20 @@ export class DndEventManager implements IDndEventManager {
 
     const currentDroppables = this.sortDroppables(this.getDroppablesInArea(position))
 
-    if (this.overlapMode == 'all') {
-      currentDroppables.forEach((d) => {
-        d.onDrop && d.onDrop(position, draggable.payload)
-        draggable.onDrop && draggable.onDrop(position, d.payload)
-      })
-    } else {
-      // single mode
-      if (currentDroppables.length) {
+    if (currentDroppables.length) {
+      if (this.overlapMode == 'all') {
+        currentDroppables.forEach((d) => {
+          d.onDrop && d.onDrop(position, draggable.payload)
+          draggable.onDrop && draggable.onDrop(position, d.payload)
+        })
+      } else {
         this.callDropWithNextParameter(currentDroppables, position, draggable.payload)
         draggable.onDrop && draggable.onDrop(position, undefined, currentDroppables[currentDroppables.length - 1].payload)
-      } else {
-        draggable.onDragEnd && draggable.onDragEnd(position)
       }
+    } else {
+      draggable.onDragEnd && draggable.onDragEnd(position)
     }
+    // single mode
     this.currentDroppables = []
   }
 
