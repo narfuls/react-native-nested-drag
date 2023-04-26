@@ -18,7 +18,7 @@ export function Nested() {
 function Draggable({ children }: PropsWithChildren) {
   return (
     <View style={styles.dragContainer}>
-      <DragView style={styles.drag}>
+      <DragView style={styles.draggable} dragStyle={styles.draggableDrag} copyDragStyle={styles.draggableClone}>
         <DragHandleView style={styles.handle}>
           <Text>drag gere!</Text>
         </DragHandleView>
@@ -30,24 +30,35 @@ function Draggable({ children }: PropsWithChildren) {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    position: 'absolute',
     width: '100%',
-    alignItems: 'baseline',
     justifyContent: 'flex-start',
   },
   dragContainer: {
     padding: 10,
   },
-  drag: {
+  draggable: {
     borderWidth: 1,
     borderRadius: 5,
+    backgroundColor: 'white',
+  },
+  draggableDrag: {
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: '#dfd',
+    opacity: 0.2,
+  },
+  draggableClone: {
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: '#dfd',
   },
   child: {
     paddingLeft: 10,
   },
   handle: {
-    width: 100,
+    width: '100%',
     height: 40,
     justifyContent: 'center',
+    alignItems: 'center',
   },
 })

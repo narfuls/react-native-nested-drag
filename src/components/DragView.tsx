@@ -92,7 +92,6 @@ function DragViewActual({
       if (!exists) {
         ctxSetClone(undefined, dndId.current)
       } else {
-        console.log('ctxSetClone width: ' + layoutRef.current.width)
         const cloneStyle = styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current
         dndId.current !== undefined &&
           ctxSetClone({

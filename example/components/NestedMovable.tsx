@@ -1,15 +1,64 @@
-import { StyleSheet, Text } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import React, { PropsWithChildren } from 'react'
+import { DragView, DragHandleView } from 'react-native-nested-drag'
 
 export function NestedMovable() {
-  return <Text style={styles.dragHandle}>NestedMovable</Text>
+  return (
+    <View style={styles.container}>
+      <Draggable>
+        <Draggable>
+          <Draggable />
+        </Draggable>
+        <Draggable />
+      </Draggable>
+    </View>
+  )
 }
 
+function Draggable({ children }: PropsWithChildren) {
+  return (
+    <View style={styles.dragContainer}>
+      <DragView movable style={styles.draggable} dragStyle={styles.draggableDrag} copyDragStyle={styles.draggableClone}>
+        <DragHandleView style={styles.handle}>
+          <Text>drag gere!</Text>
+        </DragHandleView>
+        <View style={styles.child}>{children}</View>
+      </DragView>
+    </View>
+  )
+}
 const styles = StyleSheet.create({
-  dragHandle: {
-    minWidth: 50,
-    maxWidth: 160,
-    height: 30,
-    backgroundColor: '#CCC',
+  container: {
+    padding: 10,
+    width: '100%',
+    justifyContent: 'flex-start',
+  },
+  dragContainer: {
+    padding: 10,
+  },
+  draggable: {
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: 'white',
+  },
+  draggableDrag: {
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: '#dfd',
+    opacity: 0.2,
+  },
+  draggableClone: {
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: '#dfd',
+  },
+  child: {
+    paddingLeft: 10,
+  },
+  handle: {
+    width: '100%',
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })
