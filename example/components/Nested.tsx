@@ -1,15 +1,53 @@
-import { StyleSheet, Text } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import React, { PropsWithChildren } from 'react'
+import { DragView, DragHandleView } from 'react-native-nested-drag'
 
 export function Nested() {
-  return <Text style={styles.dragHandle}>Nested</Text>
+  return (
+    <View style={styles.container}>
+      <Draggable>
+        <Draggable>
+          <Draggable />
+        </Draggable>
+        <Draggable />
+      </Draggable>
+    </View>
+  )
 }
 
+function Draggable({ children }: PropsWithChildren) {
+  return (
+    <View style={styles.dragContainer}>
+      <DragView style={styles.drag}>
+        <DragHandleView style={styles.handle}>
+          <Text>drag gere!</Text>
+        </DragHandleView>
+        <View style={styles.child}>{children}</View>
+      </DragView>
+    </View>
+  )
+}
 const styles = StyleSheet.create({
-  dragHandle: {
-    minWidth: 50,
-    maxWidth: 160,
-    height: 30,
-    backgroundColor: '#CCC',
+  container: {
+    padding: 10,
+    position: 'absolute',
+    width: '100%',
+    alignItems: 'baseline',
+    justifyContent: 'flex-start',
+  },
+  dragContainer: {
+    padding: 10,
+  },
+  drag: {
+    borderWidth: 1,
+    borderRadius: 5,
+  },
+  child: {
+    paddingLeft: 10,
+  },
+  handle: {
+    width: 100,
+    height: 40,
+    justifyContent: 'center',
   },
 })

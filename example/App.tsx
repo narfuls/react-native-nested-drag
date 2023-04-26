@@ -69,13 +69,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 30,
-  },
+  container: { position: 'absolute', flex: 1, width: '100%', justifyContent: 'flex-start', paddingTop: 30 },
   menu: {
     flexDirection: 'row',
     flexWrap: 'wrap',

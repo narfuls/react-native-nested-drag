@@ -2,7 +2,7 @@ import { Animated, View, ViewStyle, PanResponder, Vibration, MeasureOnSuccessCal
 import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
 
 import { DragContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
-import { IDragViewProps, IDraggable, IPosition, zeroPoint } from '../types'
+import { IDragViewProps, IDraggable, IPosition, zeroPoint, ILayoutData } from '../types'
 import { DragViewWithHandleAndMeasue } from './internal/DragViewWithHandleAndMeasue'
 const empty = {}
 const animEndOptions = { overshootClamping: true }
@@ -74,6 +74,7 @@ function DragViewActual({
    * Coz absolutePos updates only inside 'measure' and parentOffset may change while measure not triggered.
    * So it contains parent movedOffset) */
   const absolutePos = useRef<IPosition>(zeroPoint)
+  const layoutRef = useRef<ILayoutData>({ x: -1, y: -1, width: 0, height: 0 })
 
   const setDefaultStyle = useCallback(() => {
     defaultStyleRef.current = {
@@ -91,10 +92,12 @@ function DragViewActual({
       if (!exists) {
         ctxSetClone(undefined, dndId.current)
       } else {
+        console.log('ctxSetClone width: ' + layoutRef.current.width)
+        const cloneStyle = styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current
         dndId.current !== undefined &&
           ctxSetClone({
             draggableDndId: dndId.current,
-            style: styleParam ? styleParam : copyDragStyle ? copyDragStyle : defaultStyleRef.current,
+            style: { ...cloneStyle, width: layoutRef.current.width, height: layoutRef.current.height },
             pan: pan,
             position: {
               x: absolutePos.current.x - parentOffset.x,
@@ -218,6 +221,7 @@ function DragViewActual({
     //  dnd handlers should contain uptodate context
     const draggable: IDraggable = {
       id: dndId.current,
+      layout: layoutRef.current,
       onDragStart: onDragStart,
       onDrag: onDrag,
       onDragEnd: onDragEnd,
@@ -303,7 +307,8 @@ function DragViewActual({
 
   const panHandlers = useMemo(() => (disabled ? {} : panResponder.panHandlers), [panResponder, disabled])
   const measureCallback = useCallback<MeasureOnSuccessCallback>(
-    (_x, _y, _width, _height, pageX, pageY) => {
+    (_x, _y, width, height, pageX, pageY) => {
+      layoutRef.current = { x: pageX, y: pageY, width: width, height: height }
       absolutePos.current = {
         x: pageX + parentOffset.x - movedOffsetRef.current.x,
         y: pageY + parentOffset.y - movedOffsetRef.current.y,

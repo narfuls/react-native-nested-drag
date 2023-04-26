@@ -81,6 +81,7 @@ export interface IDroppable extends IDroppableEvents {
 export interface IDraggable extends IDraggableEvents {
   id?: number
   payload?: any
+  layout: ILayoutData
 }
 
 /** Register and update all draggables and droppables, call handlers and recieve dnd events */

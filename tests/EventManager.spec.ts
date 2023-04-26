@@ -41,6 +41,7 @@ describe('DndEventManager', () => {
         onExit: jest.fn(),
         onOver: jest.fn(),
         payload: 0,
+        layout: { x: 10, y: 10, width: 10, height: 10 },
       },
       {
         id: 1,
@@ -52,6 +53,7 @@ describe('DndEventManager', () => {
         onExit: jest.fn(),
         onOver: jest.fn(),
         payload: 1,
+        layout: { x: 10, y: 10, width: 10, height: 10 },
       },
     ]
     evenManager = new DndEventManager()

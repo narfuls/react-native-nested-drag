@@ -33,8 +33,6 @@ interface IMockSimplePubSub extends ISimplePubSub {
 
 const uniqueText = 'DragHandleView*-975!@#$%^&*'
 const uniqueStyle: ViewStyle = {
-  width: '963',
-  height: '825',
   borderColor: '#ebf0f1',
   shadowColor: '#eca0f1',
   backgroundColor: '#eca071',
@@ -313,7 +311,7 @@ describe('DragView', () => {
         })
         expect(view.props.style).toEqual(expect.objectContaining(dragStyle))
         expect(context.setClone).toBeCalledTimes(1)
-        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(copyDragStyle)
+        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(expect.objectContaining(copyDragStyle))
 
         act(() => {
           draggable?.onDrag && draggable.onDrag(zeroPoint)
@@ -339,7 +337,7 @@ describe('DragView', () => {
         })
         expect(view.props.style).toEqual(expect.objectContaining(dragStyle))
         expect(context.setClone).toBeCalledTimes(1)
-        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(copyDragStyle)
+        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(expect.objectContaining(copyDragStyle))
 
         act(() => {
           draggable?.onDrag && draggable.onDrag(zeroPoint)
@@ -351,7 +349,7 @@ describe('DragView', () => {
         })
         expect(view.props.style).toEqual(expect.objectContaining(overStyle))
         expect(context.setClone).toBeCalledTimes(2)
-        expect((context.setClone as jest.Mock).mock.calls[1][0].style).toEqual(copyOverStyle)
+        expect((context.setClone as jest.Mock).mock.calls[1][0].style).toEqual(expect.objectContaining(copyOverStyle))
 
         act(() => {
           draggable?.onOver && draggable.onOver(zeroPoint)
@@ -363,7 +361,7 @@ describe('DragView', () => {
         })
         expect(view.props.style).toEqual(expect.objectContaining(dragStyle))
         expect(context.setClone).toBeCalledTimes(3)
-        expect((context.setClone as jest.Mock).mock.calls[2][0].style).toEqual(copyDragStyle)
+        expect((context.setClone as jest.Mock).mock.calls[2][0].style).toEqual(expect.objectContaining(copyDragStyle))
 
         act(() => {
           draggable?.onDragEnd && draggable.onDragEnd(zeroPoint)
@@ -383,28 +381,28 @@ describe('DragView', () => {
         })
         expect(view.props.style).toEqual(expect.objectContaining(dragStyle))
         expect(context.setClone).toBeCalledTimes(1)
-        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(copyDragStyle)
+        expect((context.setClone as jest.Mock).mock.calls[0][0].style).toEqual(expect.objectContaining(copyDragStyle))
 
         act(() => {
           draggable?.onEnter && draggable.onEnter(zeroPoint)
         })
         expect(view.props.style).toEqual(expect.objectContaining(overStyle))
         expect(context.setClone).toBeCalledTimes(2)
-        expect((context.setClone as jest.Mock).mock.calls[1][0].style).toEqual(copyOverStyle)
+        expect((context.setClone as jest.Mock).mock.calls[1][0].style).toEqual(expect.objectContaining(copyOverStyle))
 
         act(() => {
           draggable?.onExit && draggable.onExit(zeroPoint)
         })
         expect(view.props.style).toEqual(expect.objectContaining(dragStyle))
         expect(context.setClone).toBeCalledTimes(3)
-        expect((context.setClone as jest.Mock).mock.calls[2][0].style).toEqual(copyDragStyle)
+        expect((context.setClone as jest.Mock).mock.calls[2][0].style).toEqual(expect.objectContaining(copyDragStyle))
 
         act(() => {
           draggable?.onEnter && draggable.onEnter(zeroPoint)
         })
         expect(view.props.style).toEqual(expect.objectContaining(overStyle))
         expect(context.setClone).toBeCalledTimes(4)
-        expect((context.setClone as jest.Mock).mock.calls[3][0].style).toEqual(copyOverStyle)
+        expect((context.setClone as jest.Mock).mock.calls[3][0].style).toEqual(expect.objectContaining(copyOverStyle))
 
         act(() => {
           draggable?.onDrop && draggable.onDrop(zeroPoint)
@@ -560,9 +558,11 @@ describe('DragView', () => {
       expect(view).toBeTruthy()
       if (!view) throw new Error('view is null')
 
-      expect(view.props.style).toEqual({
-        transform: [{ translateX: 10 }, { translateY: 20 }],
-      })
+      expect(view.props.style).toEqual(
+        expect.objectContaining({
+          transform: [{ translateX: 10 }, { translateY: 20 }],
+        }),
+      )
     })
     it('sets clone position with offset', () => {
       render(

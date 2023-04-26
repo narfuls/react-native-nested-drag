@@ -76,7 +76,7 @@ export class DndEventManager implements IDndEventManager {
       if (this.overlapMode == 'all') {
         currentDroppables.forEach((d, index) => {
           d.onDrop && d.onDrop(position, draggable.payload)
-          draggable.onDrop && draggable.onDrop(position, undefined , d.payload, index)
+          draggable.onDrop && draggable.onDrop(position, undefined, d.payload, index)
         })
       } else {
         this.callDropWithNextParameter(currentDroppables, position, draggable.payload)
