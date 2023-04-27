@@ -1,24 +1,44 @@
 import { StyleSheet, Text, View } from 'react-native'
-import React, { PropsWithChildren } from 'react'
-import { DragView, DragHandleView } from 'react-native-nested-drag'
+import React, { PropsWithChildren, useState } from 'react'
+import { DragView, DragHandleView, IPosition, DraggableEnd, zeroPoint } from 'react-native-nested-drag'
 
 export function NestedMovable() {
+  const [offset1, setOffset1] = useState(zeroPoint)
+  const [offset11, setOffset11] = useState(zeroPoint)
+  const [offset12, setOffset12] = useState(zeroPoint)
+  const [offset111, setOffset111] = useState(zeroPoint)
   return (
     <View style={styles.container}>
-      <Draggable>
-        <Draggable>
-          <Draggable />
+      <Draggable payload={1} offset={offset1} setOffset={setOffset1}>
+        <Draggable payload={11} offset={offset11} setOffset={setOffset11}>
+          <Draggable payload={111} offset={offset111} setOffset={setOffset111} />
         </Draggable>
-        <Draggable />
+        <Draggable payload={12} offset={offset12} setOffset={setOffset12} />
       </Draggable>
     </View>
   )
 }
 
-function Draggable({ children }: PropsWithChildren) {
+interface IDraggableProps {
+  payload: number
+  offset: IPosition
+  setOffset: React.Dispatch<React.SetStateAction<IPosition>>
+}
+function Draggable({ children, payload, offset = zeroPoint, setOffset }: PropsWithChildren<IDraggableProps>) {
+  const saveOffset: DraggableEnd = (_, offset: IPosition) => {
+    setOffset(offset)
+  }
   return (
     <View style={styles.dragContainer}>
-      <DragView movable style={styles.draggable} dragStyle={styles.draggableDrag} copyDragStyle={styles.draggableClone}>
+      <DragView
+        payload={payload}
+        movableOffset={offset}
+        onDragEnd={saveOffset}
+        movable
+        style={styles.draggable}
+        dragStyle={styles.draggableDrag}
+        copyDragStyle={styles.draggableClone}
+      >
         <DragHandleView style={styles.handle}>
           <Text>drag gere!</Text>
         </DragHandleView>

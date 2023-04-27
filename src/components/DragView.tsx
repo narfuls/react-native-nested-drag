@@ -158,14 +158,17 @@ function DragViewActual({
   )
 
   const onExit = useCallback(
-    (position: IPosition, payload: any) => {
-      if (movable) {
-        if (copyOverStyle || overStyle) {
-          setClone(true)
+    (position: IPosition, payload: any, overCount?: number) => {
+      if (!overCount) {
+        //overCount: only if not over (0 or undefinded) to prevent style change
+        if (movable) {
+          if (copyOverStyle || overStyle) {
+            setClone(true)
+          }
+        } else {
+          overStyle && setStyle(dragStyle ? dragStyle : styleProp)
+          copyOverStyle && setClone(true)
         }
-      } else {
-        overStyle && setStyle(dragStyle ? dragStyle : styleProp)
-        copyOverStyle && setClone(true)
       }
       onExitProp && onExitProp(position, payload)
     },

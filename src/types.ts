@@ -25,7 +25,9 @@ export type DroppableEnterExit = (position: IPosition, payload?: any) => void
 
 export type DroppableDropOver = (position: IPosition, payload?: any, triggerNextDroppable?: () => void) => void
 
-export type DraggableEnterExitOver = (position: IPosition, payload?: any) => void
+export type DraggableEnterOver = (position: IPosition, payload?: any) => void
+
+export type DraggableExit = (position: IPosition, payload?: any, overCount?: number) => void
 
 export type DraggableDragStart = (position: IPosition) => void
 
@@ -50,11 +52,11 @@ export interface IDraggableEvents {
   /** Called repeatedly while dragged, not over any receiver */
   onDrag?: DraggableDragStart
   /** Called when initially dragged over a new receiver */
-  onEnter?: DraggableEnterExitOver
+  onEnter?: DraggableEnterOver
   /** Called repeatedly while dragged over a receiver */
-  onOver?: DraggableEnterExitOver
+  onOver?: DraggableEnterOver
   /** Called view when dragged off of a receiver */
-  onExit?: DraggableEnterExitOver
+  onExit?: DraggableExit
   /** Called view when drag ends not over any receiver or is cancelled */
   onDragEnd?: DraggableEnd
   /** Called when drag ends over a receiver */

@@ -20,8 +20,8 @@ describe('DropSum', () => {
     jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
     jest.useFakeTimers()
     act(() => {
-      mockEventManager.drop(draggable1, droppable, undefined)
-      mockEventManager.drop(draggable2, droppable, undefined)
+      mockEventManager.drop(draggable1, droppable)
+      mockEventManager.drop(draggable2, droppable)
     })
     //@ts-ignore
     expect(sum).toHaveTextContent('sum: 3')

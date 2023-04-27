@@ -14,7 +14,13 @@ export function NestedDrop() {
         </View>
       </DropView>
       <View style={styles.container}>
-        <DragView style={styles.item} dragStyle={styles.itemDragStyle} overStyle={styles.itemOverStyle} />
+        <DragView
+          style={styles.item}
+          dragStyle={styles.itemDragStyle}
+          overStyle={styles.itemOverStyle}
+          copyDragStyle={styles.itemDragStyle}
+          copyOverStyle={styles.itemOverStyle}
+        />
       </View>
     </>
   )

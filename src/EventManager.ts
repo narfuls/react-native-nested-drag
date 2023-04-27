@@ -106,7 +106,7 @@ export class DndEventManager implements IDndEventManager {
       })
       leavedDroppables.forEach((d) => {
         d.onExit && d.onExit(position, draggable.payload)
-        draggable.onExit && draggable.onExit(position, d.payload)
+        draggable.onExit && draggable.onExit(position, d.payload, currentDroppables.length)
       })
       currentDroppables.forEach((d) => {
         d.onOver && d.onOver(position, draggable.payload)
