@@ -154,7 +154,7 @@ export class DndEventManager implements IDndEventManager {
     )
 
   sortDroppables = (droppables: IDroppable[]) => {
-    const result = [...droppables]
+    const result = droppables.slice() // const result = [...droppables] https://github.com/microsoft/tslib/issues/149
     if (this.overlapMode == 'first') {
       result.reverse()
     } else if (this.overlapMode != 'last' && this.overlapMode != 'all') {

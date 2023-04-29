@@ -12,18 +12,23 @@ describe('DropSum', () => {
         <DropSum />
       </DragProvider>,
     )
-    const sum = screen.queryByText('sum: 0')
-
-    const draggable1 = mockEventManager.draggables.find((d) => d.payload == 1)
-    const draggable2 = mockEventManager.draggables.find((d) => d.payload == 2)
-    const droppable = mockEventManager.droppables[0]
+    const sum = screen.queryByText('drop here! Sum: 0')
+    expect(sum).toBeTruthy()
+    //draggables and droppable may change
+    const draggable1 = () => mockEventManager.draggables.find((d) => d.payload == 1)
+    const draggable2 = () => mockEventManager.draggables.find((d) => d.payload == 2)
+    const droppable = () => mockEventManager.droppables[0]
     jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper')
     jest.useFakeTimers()
     act(() => {
-      mockEventManager.drop(draggable1, droppable)
-      mockEventManager.drop(draggable2, droppable)
+      mockEventManager.drop(draggable1(), droppable())
     })
     //@ts-ignore
-    expect(sum).toHaveTextContent('sum: 3')
+    expect(sum).toHaveTextContent('drop here! Sum: 1')
+    act(() => {
+      mockEventManager.drop(draggable2(), droppable())
+    })
+    //@ts-ignore
+    expect(sum).toHaveTextContent('drop here! Sum: 3')
   })
 })

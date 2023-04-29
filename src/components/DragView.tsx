@@ -170,7 +170,7 @@ function DragViewActual({
           copyOverStyle && setClone(true)
         }
       }
-      onExitProp && onExitProp(position, payload)
+      onExitProp && onExitProp(position, payload, overCount)
     },
     [onExitProp, copyOverStyle, dragStyle, overStyle, setClone, styleProp, movable],
   )

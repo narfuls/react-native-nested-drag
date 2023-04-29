@@ -7,9 +7,9 @@ export function Styles() {
   return (
     <>
       <DropView style={styles.drop} overStyle={styles.dropOver}>
-        <Text>drop here! </Text>
+        <Text>drop here!</Text>
       </DropView>
-      <View style={styles.container}>
+      <View style={styles.container} testID={'draggables'}>
         <DragView
           style={styles.item}
           dragStyle={styles.itemDragStyle}
@@ -46,7 +46,7 @@ const dragStyle: ViewStyle = {
   borderRadius: 50,
 }
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
