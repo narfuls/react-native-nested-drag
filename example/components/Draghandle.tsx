@@ -8,11 +8,11 @@ export function Draghandle() {
       <View style={styles.item}>
         <Text>part 1</Text>
         <DragHandleView style={styles.handle}>
-          <Text>drag gere!</Text>
+          <Text>drag here!</Text>
         </DragHandleView>
         <Text>part 2</Text>
         <DragHandleView style={styles.handle}>
-          <Text>drag gere!</Text>
+          <Text>drag here!</Text>
         </DragHandleView>
         <Text>part 3</Text>
       </View>

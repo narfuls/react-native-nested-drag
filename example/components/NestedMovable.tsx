@@ -40,7 +40,7 @@ function Draggable({ children, payload, offset = zeroPoint, setOffset }: PropsWi
         copyDragStyle={styles.draggableClone}
       >
         <DragHandleView style={styles.handle}>
-          <Text>drag gere!</Text>
+          <Text>drag here!</Text>
         </DragHandleView>
         <View style={styles.child}>{children}</View>
       </DragView>
