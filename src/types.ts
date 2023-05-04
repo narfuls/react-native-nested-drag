@@ -55,9 +55,9 @@ export interface IDraggableEvents {
   onEnter?: DraggableEnterOver
   /** Called repeatedly while dragged over a receiver */
   onOver?: DraggableEnterOver
-  /** Called view when dragged off of a receiver */
+  /** Called when dragged off of a receiver */
   onExit?: DraggableExit
-  /** Called view when drag ends not over any receiver or is cancelled */
+  /** Called when drag ends not over any receiver or is cancelled */
   onDragEnd?: DraggableEnd
   /** Called when drag ends over a receiver */
   onDrop?: DraggableDrop
@@ -86,7 +86,7 @@ export interface IDraggable extends IDraggableEvents {
   layout: ILayoutData
 }
 
-/** Register and update all draggables and droppables, call handlers and recieve dnd events */
+/** Register and update all draggables and droppables, call handlers and receive dnd events */
 export interface IDndEventManager {
   registerDroppable: (droppable: IDroppable) => number
   updateDroppable: (droppable: IDroppable) => void
@@ -127,7 +127,7 @@ export interface IDropViewProps extends IDroppableEvents {
   /** Style applied while dragging over this view */
   overStyle?: ViewStyle
   payload?: any
-  /** view can't recieve draggables */
+  /** view can't receive draggables */
   disabled?: boolean
 }
 
@@ -144,7 +144,7 @@ export interface IDragCloneProps {
 export interface IDragProviderProps {
   /** for testing */
   mockEventManager?: IDndEventManager
-  /** droppable overlap call ('first' | 'last' | 'all' | compare function) (default last) */
+  /** droppable overlap call order ('first' | 'last' | 'all' | compare function) (default last) */
   overlapMode?: OverlapMode
 }
 

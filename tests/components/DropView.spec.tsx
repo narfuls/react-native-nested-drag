@@ -16,14 +16,14 @@ const TestingComponent = ({ id }: { id: number }) => {
   )
 }
 
-const TestingComponentReciever = ({ id }: { id: number }) => {
+const TestingComponentReceiver = ({ id }: { id: number }) => {
   const parentOnLayout = useContext(DragViewLayoutContext)
   const [count, setCout] = useState(0)
   parentOnLayout &&
     parentOnLayout.subscribe(() => {
       setCout(count + 1)
     })
-  return <Text testID={'TestingComponentReciever' + id}>called:{count}</Text>
+  return <Text testID={'TestingComponentReceiver' + id}>called:{count}</Text>
 }
 
 interface IMockSimplePubSub extends ISimplePubSub {
@@ -213,11 +213,11 @@ describe('DropView', () => {
         <DragViewLayoutContext.Provider value={contextLayout}>
           <DropView>
             <Text>{uniqueText}</Text>
-            <TestingComponentReciever id={0} />
+            <TestingComponentReceiver id={0} />
           </DropView>
         </DragViewLayoutContext.Provider>,
       )
-      const testComp0 = screen.queryByTestId('TestingComponentReciever0')
+      const testComp0 = screen.queryByTestId('TestingComponentReceiver0')
       //@ts-ignore
       expect(testComp0).toHaveTextContent('called:0')
 
