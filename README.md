@@ -122,8 +122,6 @@ Available all ```ViewProps``` except for ```GestureResponderHandlers```
 ## DropView
 The element that you want to receive droppable events.
 
-Available all ```ViewProps```
-
 ```jsx
   const drop = (_, payload) => {
     console.log(payload)
@@ -137,6 +135,8 @@ Available all ```ViewProps```
 ### Props
 All props are optional.
  
+Available all ```ViewProps```
+
 | Prop          | Type       | Default       | Description   |      
 | ------------- | ---------- | ------------- | ------------- |
 | `payload` | `any` | | An arbitrary value (often) unique to this `DropView` that can later be used to determine in which `DropView` the `DragView` was dropped to |
