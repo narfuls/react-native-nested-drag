@@ -1,5 +1,5 @@
-import { View, MeasureOnSuccessCallback, ViewProps } from 'react-native'
-import React, { useRef, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
+import { View, MeasureOnSuccessCallback, ViewProps, LayoutChangeEvent } from 'react-native'
+import React, { useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 
 import { DragViewLayoutContext } from '../../DragContext'
 import { SimplePubSub } from '../../SimplePubSub'
@@ -9,18 +9,22 @@ export interface IViewWithLayoutSubscriptionProps extends ViewProps {
 }
 
 /** 'ref' and 'onLayout' props will be overwriten */
-export function ViewWithLayoutSubscription(props: PropsWithChildren<IViewWithLayoutSubscriptionProps>) {
+export function ViewWithLayoutSubscription({ measureCallback, onLayout: onLayoutProp, ...props }: IViewWithLayoutSubscriptionProps) {
   /** viewRef to measure */
   const viewRef = useRef<View>(null)
   const onLayoutPubSub = useRef(new SimplePubSub()).current
   const parentOnLayout = useContext(DragViewLayoutContext)
 
-  const onLayout = useCallback(() => {
-    if (viewRef?.current) {
-      viewRef.current.measure(props.measureCallback)
-    }
-    onLayoutPubSub.publish()
-  }, [onLayoutPubSub, props.measureCallback])
+  const onLayout = useCallback(
+    (evt?: LayoutChangeEvent) => {
+      if (viewRef?.current) {
+        viewRef.current.measure(measureCallback)
+      }
+      onLayoutPubSub.publish()
+      onLayoutProp && evt && onLayoutProp(evt)
+    },
+    [onLayoutPubSub, measureCallback, onLayoutProp],
+  )
 
   useEffect(() => {
     parentOnLayout && parentOnLayout.subscribe(onLayout)
@@ -29,9 +33,10 @@ export function ViewWithLayoutSubscription(props: PropsWithChildren<IViewWithLay
     }
   }, [parentOnLayout, onLayout])
 
+  const viewProps = useMemo(() => ({ ...props, onLayout: onLayout }), [props, onLayout])
   return (
     <DragViewLayoutContext.Provider value={onLayoutPubSub}>
-      <View {...props} ref={viewRef} onLayout={onLayout}>
+      <View {...viewProps} ref={viewRef}>
         {props.children}
       </View>
     </DragViewLayoutContext.Provider>

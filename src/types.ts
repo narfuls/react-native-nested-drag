@@ -1,4 +1,4 @@
-import { Animated, GestureResponderHandlers, ViewStyle } from 'react-native'
+import { Animated, GestureResponderHandlers, ViewStyle, ViewProps, LayoutChangeEvent } from 'react-native'
 
 export interface IDragContext {
   /** Calls dnd events */
@@ -16,8 +16,8 @@ export interface IDragHandleContext {
 }
 
 export interface ISimplePubSub {
-  subscribe: (onLayout: () => void) => void
-  unsubscribe: (onLayout: () => void) => void
+  subscribe: (onLayout: (e?: LayoutChangeEvent) => void) => void
+  unsubscribe: (onLayout: (e?: LayoutChangeEvent) => void) => void
   publish: () => void
 }
 
@@ -121,9 +121,7 @@ export interface IMockDndEventManager extends IDndEventManager {
   drop: (draggable: IDraggable, droppable: IDroppable, position?: IPosition, movableOffset?: IPosition, triggerNextDroppable?: () => void) => void
 }
 
-export interface IDropViewProps extends IDroppableEvents {
-  /** Custom style prop */
-  style?: ViewStyle
+export interface IDropViewProps extends IDroppableEvents, ViewProps {
   /** Style applied while dragging over this view */
   overStyle?: ViewStyle
   payload?: any
@@ -131,9 +129,7 @@ export interface IDropViewProps extends IDroppableEvents {
   disabled?: boolean
 }
 
-export interface IDragHandleViewProps {
-  style?: ViewStyle
-}
+export type ViewWithoutPanHandlersProps = Omit<ViewProps, keyof GestureResponderHandlers>
 
 export interface IDragCloneProps {
   clone?: IDragClone
@@ -153,8 +149,6 @@ export type OverlapMode = 'first' | 'last' | 'all' | DroppablesComparer
 export type DroppablesComparer = (droppable1: { layout: ILayoutData; payload?: any }, droppable2: { layout: ILayoutData; payload?: any }) => number
 
 export interface IDragViewStyleProps {
-  /** Custom style prop */
-  style?: ViewStyle
   /** Style applied while this view is being dragged */
   dragStyle?: ViewStyle
   /** Style applied while this view is being dragged over a receiver */
@@ -165,7 +159,9 @@ export interface IDragViewStyleProps {
   copyOverStyle?: ViewStyle
 }
 
-export interface IDragViewProps extends IDragViewStyleProps, IDraggableEvents {
+export interface IDragViewProps extends IDragViewStyleProps, IDraggableEvents, ViewWithoutPanHandlersProps {
+  /** Custom style prop */
+  style?: ViewStyle
   /** view can't be dragged */
   disabled?: boolean
   /** view start drag after delay @default 0 */
@@ -176,54 +172,18 @@ export interface IDragViewProps extends IDragViewStyleProps, IDraggableEvents {
   /** actual view moves with copy ontop and stays where it relesed */
   movable?: boolean
   /** customize dragEnd animation @default {overshootClamping: true}*/
-  animationEndOptions?: ISpringAnimationConfig
+  animationEndOptions?: SpringAnimationConfig
   /** customize drop animation @default {}*/
-  animationDropOptions?: ITimingAnimationConfig
+  animationDropOptions?: TimingAnimationConfig
   /** in case you want to restore innser state (handy for nested movable) */
   movableOffset?: IPosition
 }
 
 /** Animated.TimingAnimationConfig without toValue and useNativeDriver*/
-export interface ITimingAnimationConfig {
-  /** Length of animation (milliseconds). @Default 500. */
-  duration?: number
-  /**Easing function to define curve. Default is Easing.inOut(Easing.ease). */
-  easing?: (value: number) => number
-  /**Start the animation after delay (milliseconds). @Default 0. */
-  delay?: number
-  /**Whether or not this animation creates an "interaction handle" on the InteractionManager. @Default true.*/
-  isInteraction?: boolean
-}
+export type TimingAnimationConfig = Omit<Animated.TimingAnimationConfig, 'toValue' | 'useNativeDriver'>
 
 /** Animated.SpringAnimationConfig without toValue and useNativeDriver*/
-export interface ISpringAnimationConfig {
-  /** Controls "bounciness"/overshoot. Default 7.*/
-  friction?: number
-  /** Controls speed. Default 40. */
-  tension?: number
-  /**Controls speed of the animation. Default 12. */
-  speed?: number
-  /** Controls bounciness. Default 8.*/
-  bounciness?: number
-  /** The spring stiffness coefficient. Default 100.*/
-  stiffness?: number
-  /**Defines how the spring’s motion should be damped due to the forces of friction. Default 10. */
-  damping?: number
-  /**The mass of the object attached to the end of the spring. Default 1. */
-  mass?: number
-  /** The initial velocity of the object attached to the spring. Default 0 (object is at rest).*/
-  velocity?: number
-  /**Boolean indicating whether the spring should be clamped and not bounce. Default false. */
-  overshootClamping?: boolean
-  /** The threshold of displacement from rest below which the spring should be considered at rest. Default 0.001.*/
-  restDisplacementThreshold?: number
-  /** The speed at which the spring should be considered at rest in pixels per second. Default 0.001.*/
-  restSpeedThreshold?: number
-  /**  Start the animation after delay (milliseconds). Default 0.*/
-  delay?: number
-  /**Whether or not this animation creates an "interaction handle" on the InteractionManager. Default true. */
-  isInteraction?: boolean
-}
+export type SpringAnimationConfig = Omit<Animated.SpringAnimationConfig, 'toValue' | 'useNativeDriver'>
 
 export interface IDragClone {
   /** Custom style prop */

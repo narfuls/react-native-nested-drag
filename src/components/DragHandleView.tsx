@@ -1,25 +1,20 @@
-import { Animated, View } from 'react-native'
-import React, { useContext, PropsWithChildren, useEffect } from 'react'
+import { View, ViewProps } from 'react-native'
+import React, { useContext, useEffect } from 'react'
 
 import { DragHandleContext, DragCloneContext } from '../DragContext'
-import { IDragHandleViewProps } from '../types'
 
-export function DragHandleView({ children, style = {} }: PropsWithChildren<IDragHandleViewProps>) {
+export function DragHandleView(props: ViewProps) {
   const cloned = useContext(DragCloneContext)
-  if (cloned) return <View style={style}>{children}</View>
-  return <DragHandleViewActual style={style}>{children}</DragHandleViewActual>
+  if (cloned) return <View style={props.style}>{props.children}</View>
+  return <DragHandleViewActual {...props} />
 }
 
-function DragHandleViewActual({ children, style = {} }: PropsWithChildren<IDragHandleViewProps>) {
+function DragHandleViewActual(props: ViewProps) {
   const { panHandlers, setHandleExists } = useContext(DragHandleContext)
 
   useEffect(() => {
     setHandleExists && setHandleExists()
   }, [setHandleExists])
 
-  return (
-    <Animated.View style={style} {...panHandlers}>
-      {children}
-    </Animated.View>
-  )
+  return <View {...props} {...panHandlers} />
 }

@@ -58,7 +58,7 @@ All props are optional.
 | Prop          | Type       | Default       | Description   |      
 | ------------- | ---------- | ------------- | ------------- |
 | `mockEventManager` | [`IDndEventManager`](./src/types.ts#L90) | | Only for testing |
-| `overlapMode` | [`OverlapMode`](./src/types.ts#L151) | 'last' | Specifies events call order when multiple `DropView` in same area. After sorting with comparer, `DropView` events will be called last to first. **You can't change it dynamically.**|
+| `overlapMode` | [`OverlapMode`](./src/types.ts#L147) | 'last' | Specifies events call order when multiple `DropView` in same area. After sorting with comparer, `DropView` events will be called last to first. **You can't change it dynamically.**|
 
 ## DragView
 The element that you want to make draggable.
@@ -74,6 +74,8 @@ The element that you want to make draggable.
 
 ### Props
 All props are optional.
+
+Available all ```ViewProps``` except for ```GestureResponderHandlers```
 
 | Prop          | Type       | Default       | Description   |      
 | ------------- | ---------- | ------------- | ------------- |
@@ -95,8 +97,8 @@ All props are optional.
 | `onExit` |  [`DraggableExit`](./src/types.ts#L30) |  | Callback that is triggered when the `DragView` leaves the droppable area  |
 | `onDragEnd` |  [`DraggableEnd`](./src/types.ts#L34) |  | Callback that is triggered when the `DragView` drag ends not over any receiver or is cancelled  |
 | `onDrop` |  [`DraggableDrop`](./src/types.ts#L36) |  | Callback that is triggered when the `DragView`  drag ends over a receiver  |
-| `animationEndOptions` |  [`ISpringAnimationConfig`](./src/types.ts#L199) | `{ overshootClamping: true}` | `Animated.SpringAnimationConfig` to customize dragEnd animation |
-| `animationDropOptions` |  [`ITimingAnimationConfig`](./src/types.ts#L187) |  | `Animated.TimingAnimationConfig` to customize dragEnd animation |
+| `animationEndOptions` |  [`SpringAnimationConfig`](./src/types.ts#L186) | `{ overshootClamping: true}` | `Animated.SpringAnimationConfig` to customize dragEnd animation |
+| `animationDropOptions` |  [`TimingAnimationConfig`](./src/types.ts#L183) |  | `Animated.TimingAnimationConfig` to customize drop fadeout animation |
 
 ## DragHandleView
 `DragHandleView` is useful when you want to restrict area where drag can start. 
@@ -114,13 +116,13 @@ Notice that `Button` and `TouchableOpacity` work inside `DragView` and also rest
 ```
 ### Props
 All props are optional.
-| Prop          | Type       | Default       | Description   |      
-| ------------- | ---------- | ------------- | ------------- |
-| `style` | `ViewStyle` |  | Style applied just like plain View |
 
+Available all ```ViewProps``` except for ```GestureResponderHandlers```
 
 ## DropView
 The element that you want to receive droppable events.
+
+Available all ```ViewProps```
 
 ```jsx
   const drop = (_, payload) => {

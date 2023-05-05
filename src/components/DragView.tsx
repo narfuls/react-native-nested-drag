@@ -1,5 +1,5 @@
 import { Animated, View, ViewStyle, PanResponder, Vibration, MeasureOnSuccessCallback } from 'react-native'
-import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useMemo, useCallback } from 'react'
+import React, { useRef, useState, useContext, useEffect, useMemo, useCallback } from 'react'
 
 import { DragContext, DragViewOffsetContext, DragCloneContext } from '../DragContext'
 import { IDragViewProps, IDraggable, IPosition, zeroPoint, ILayoutData } from '../types'
@@ -13,7 +13,7 @@ const animEndOptions = { overshootClamping: true }
   - sets on dragEnd as pan change
 4) parent: should be set for children via ctx as parent + movable
   - sets on dragEnd and ctx change*/
-export function DragView(props: PropsWithChildren<IDragViewProps>) {
+export function DragView(props: IDragViewProps) {
   const cloned = useContext(DragCloneContext)
   if (cloned) {
     return (
@@ -55,7 +55,8 @@ function DragViewActual({
   onDrop: onDropProp,
   animationEndOptions = animEndOptions,
   animationDropOptions = empty,
-}: PropsWithChildren<IDragViewProps>) {
+  ...restProps
+}: IDragViewProps) {
   const { dndEventManager, setClone: ctxSetClone } = useContext(DragContext)
   const parentOffset = useContext(DragViewOffsetContext)
 
@@ -320,11 +321,13 @@ function DragViewActual({
     [parentOffset, setDndEventManagerDraggable],
   )
 
+  const viewWithHandleAndMeasueProps = useMemo(
+    () => ({ ...restProps, panHandlers: panHandlers, measureCallback: measureCallback, style: style }),
+    [restProps, measureCallback, style, panHandlers],
+  )
   return (
     <DragViewOffsetContext.Provider value={offsetContext}>
-      <DragViewWithHandleAndMeasue panHandlers={panHandlers} measureCallback={measureCallback} style={style}>
-        {children}
-      </DragViewWithHandleAndMeasue>
+      <DragViewWithHandleAndMeasue {...viewWithHandleAndMeasueProps}>{children}</DragViewWithHandleAndMeasue>
     </DragViewOffsetContext.Provider>
   )
 }

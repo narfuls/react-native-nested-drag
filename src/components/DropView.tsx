@@ -1,12 +1,12 @@
 import { View, MeasureOnSuccessCallback } from 'react-native'
-import React, { useRef, useState, useContext, PropsWithChildren, useEffect, useCallback } from 'react'
+import React, { useRef, useState, useContext, useEffect, useCallback, useMemo } from 'react'
 
 import { IDroppable, IDropViewProps, IPosition, ILayoutData } from '../types'
 import { DragContext, DragCloneContext } from '../DragContext'
 import { ViewWithLayoutSubscription } from './internal/ViewWithLayoutSubscription'
 const empty = {}
 
-export function DropView(props: PropsWithChildren<IDropViewProps>) {
+export function DropView(props: IDropViewProps) {
   const cloned = useContext(DragCloneContext)
   if (cloned) return <View style={props.style}>{props.children}</View>
   return <DropViewActual {...props} />
@@ -22,7 +22,8 @@ function DropViewActual({
   onEnter: onEnterProp,
   onExit: onExitProp,
   onOver,
-}: PropsWithChildren<IDropViewProps>) {
+  ...restProps
+}: IDropViewProps) {
   const { dndEventManager } = useContext(DragContext)
   /** id from IDndEventManager */
   const dndId = useRef<number | undefined>(undefined)
@@ -95,10 +96,9 @@ function DropViewActual({
     },
     [calcDroppable, dndEventManager],
   )
-
-  return (
-    <ViewWithLayoutSubscription measureCallback={measureCallback} style={style}>
-      {children}
-    </ViewWithLayoutSubscription>
+  const viewWithLayoutSubscriptionProps = useMemo(
+    () => ({ ...restProps, measureCallback: measureCallback, style: style }),
+    [restProps, measureCallback, style],
   )
+  return <ViewWithLayoutSubscription {...viewWithLayoutSubscriptionProps}>{children}</ViewWithLayoutSubscription>
 }
