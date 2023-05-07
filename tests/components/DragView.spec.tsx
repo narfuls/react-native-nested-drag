@@ -404,10 +404,12 @@ describe('DragView', () => {
         expect(context.setClone).toBeCalledTimes(4)
         expect((context.setClone as jest.Mock).mock.calls[3][0].style).toEqual(expect.objectContaining(copyOverStyle))
 
+        jest.useFakeTimers()
         act(() => {
           draggable?.onDrop && draggable.onDrop(zeroPoint)
-          //draggable.onDragEnd(zeroPoint)
+          jest.advanceTimersByTime(1000)
         })
+        jest.useRealTimers()
         expect(view.props.style).toEqual(expect.objectContaining(uniqueStyle))
       })
     })

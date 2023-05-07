@@ -118,8 +118,9 @@ function DragViewActual({
       useNativeDriver: true,
     }).start(() => {
       setClone()
+      setDefaultStyle()
     })
-  }, [setClone, animationEndOptions, pan])
+  }, [setClone, setDefaultStyle, animationEndOptions, pan])
 
   const fadeOut = useCallback(() => {
     Animated.timing(fadeAnim, {
@@ -130,8 +131,9 @@ function DragViewActual({
       pan.setValue(zeroPoint) // remove flashing on second drag
       fadeAnim.setValue(1)
       setClone()
+      setDefaultStyle()
     })
-  }, [setClone, animationDropOptions, fadeAnim, pan])
+  }, [setClone, setDefaultStyle, animationDropOptions, fadeAnim, pan])
 
   const movableDragEnd = useCallback(() => {
     pan.extractOffset()
@@ -141,7 +143,8 @@ function DragViewActual({
     }
     setMovedOffset(movedOffsetRef.current)
     setClone()
-  }, [setClone, pan])
+    setDefaultStyle()
+  }, [setClone, setDefaultStyle, pan])
 
   const onEnter = useCallback(
     (position: IPosition, payload: any) => {
@@ -198,10 +201,9 @@ function DragViewActual({
       } else {
         bounce()
       }
-      setDefaultStyle()
       onDragEndProp && onDragEndProp(position, movedOffsetRef.current)
     },
-    [onDragEndProp, bounce, movable, movableDragEnd, setDefaultStyle],
+    [onDragEndProp, bounce, movable, movableDragEnd],
   )
 
   const onDrop: (position: IPosition, _movedOffset: any, payload: any, overlapIndex?: number) => void = useCallback(
@@ -213,11 +215,10 @@ function DragViewActual({
         } else {
           fadeOut()
         }
-        setDefaultStyle()
       }
       onDropProp && onDropProp(position, movedOffsetRef.current, payload, overlapIndex)
     },
-    [movable, movableDragEnd, setDefaultStyle, onDropProp, fadeOut],
+    [movable, movableDragEnd, onDropProp, fadeOut],
   )
 
   const setDndEventManagerDraggable = useCallback(() => {
